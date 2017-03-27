@@ -1,0 +1,7 @@
+#cmake_minimum_required (VERSION 3.5.1)
+project (cpp_python)
+message(${cpp_python_SOURCE_DIR})
+message(${cpp_python_BINARY_DIR})
+set(CMAKE_BINARY_DIR ./out)
+set (BUILD_SHARED_LIBS TRUE)
+add_library(cpp_python SHARED cpp_functions.cpp)
