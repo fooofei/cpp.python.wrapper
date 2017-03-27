@@ -1,10 +1,10 @@
+ï»¿
+## C++ ä¸ Python ç²˜åˆæœ€å¥½çš„å®è·µæ–¹æ³•
 
-## C++ Óë Python Õ³ºÏ×îºÃµÄÊµ¼ù·½·¨
-
-¶Ô±È¹ı Cython(¿ÉÒÔĞ´ c++ class), Python COM, swig£¬ ´Ë·½·¨ÊÇ×îºÃµÄ¡£
+å¯¹æ¯”è¿‡ Cython(å¯ä»¥å†™ c++ class), Python COM, swigï¼Œ æ­¤æ–¹æ³•æ˜¯æœ€å¥½çš„ã€‚
 
 
-## ²âÊÔ
+## æµ‹è¯•
 
 1. install cmake
 
@@ -14,7 +14,7 @@
 
 one output in linux
 ```
-?  cpp_python_wrapper bash direct_run.sh
+$  cpp_python_wrapper bash direct_run.sh
 -- The C compiler identification is GNU 5.4.0
 -- The CXX compiler identification is GNU 5.4.0
 -- Check for working C compiler: /usr/bin/cc
