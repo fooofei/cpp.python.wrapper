@@ -3,6 +3,8 @@
 
 对比过 Cython(可以写 c++ class), Python COM, swig， 此方法是最好的。
 
+兼容性好。C++ 模块 与 Python中结构定义 两者间新老版本搭配完全无风险。
+
 
 ## 测试
 
