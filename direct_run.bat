@@ -1,11 +1,11 @@
-@echo off
+ï»¿@echo off
 
 %~d0
 cd /d %~dp0
 
 
 
-:: Èç¹ûÓÐ´íÎó¾ÍÍË³ö
+:: å¦‚æžœæœ‰é”™è¯¯å°±é€€å‡º
 cmake -G "Visual Studio 11 2012" . || exit /B 1 
 cmake --build . || exit /B 1
 python python_caller.py || exit /B 1

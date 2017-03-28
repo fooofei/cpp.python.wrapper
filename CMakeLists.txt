@@ -1,4 +1,4 @@
-#cmake_minimum_required (VERSION 3.5.1)
+﻿#cmake_minimum_required (VERSION 3.5.1)
 project (cpp_python)
 message(${cpp_python_SOURCE_DIR})
 message(${cpp_python_BINARY_DIR})

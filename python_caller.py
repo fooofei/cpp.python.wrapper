@@ -1,4 +1,4 @@
-#coding=utf-8
+﻿#coding=utf-8
 '''
 
  compatible with python 2,3
