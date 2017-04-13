@@ -16,7 +16,7 @@
 
 one output in linux
 ```
-$  cpp_python_wrapper bash direct_run.sh
+$  bash direct_run.sh
 -- The C compiler identification is GNU 5.4.0
 -- The CXX compiler identification is GNU 5.4.0
 -- Check for working C compiler: /usr/bin/cc
@@ -31,8 +31,6 @@ $  cpp_python_wrapper bash direct_run.sh
 -- Detecting CXX compiler ABI info - done
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
-/home/a/f/everysamples/0000/bbs/cpp_python_wrapper
-/home/a/f/everysamples/0000/bbs/cpp_python_wrapper
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /home/a/f/everysamples/0000/bbs/cpp_python_wrapper
@@ -47,3 +45,5 @@ print from cpp->size:(45),value:(this is string in python test_func_in_memoryw)
 out string from cpp in func_out_memory_noalloc
 out string from cpp in func_out_memory_alloc
 ```
+
+clear.py 不再使用
