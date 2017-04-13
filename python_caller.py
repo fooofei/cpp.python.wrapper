@@ -105,7 +105,7 @@ class CppExportStructure(ctypes.Structure):
 
 
     def load(self):
-        a = {'nt':'debug\\cpp_python.dll'}
+        a = {'nt':'cpp_python.dll'}
         p = os.path.join(curpath,a.get(os.name,'libcpp_python.so'))
         p = io_out_arg(p, pfn_check=os.path.exists)
         lib = library_loader.LoadLibrary(p)

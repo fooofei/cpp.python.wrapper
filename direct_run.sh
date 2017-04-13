@@ -1,8 +1,13 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 
 # 失败就退出
-cmake . || exit 1
+mkdir build
+cd build
+cmake .. || exit 1
 make  || exit 1
+cp libcpp_python.so ..
+cd ..
 python  python_caller.py|| exit 1
-python clear.py
+rm -rf build
+#python clear.py
