@@ -6,6 +6,12 @@
 兼容性好。C++ 模块 与 Python中结构定义 两者间新老版本搭配完全无风险。
 
 
+## 项目说明
+
+Windows 使用 stdcall
+
+Linux 使用 cdecl
+
 ## 测试
 
 1. install cmake
