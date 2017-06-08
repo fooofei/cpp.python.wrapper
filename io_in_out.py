@@ -1,4 +1,4 @@
-﻿# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 
 
 '''
@@ -26,6 +26,12 @@ scandir.walk  benchmark :
 # 2017-02-22 v2.00 修复其他国语言编码异常
 # 2017-02-23 v2.10 add io map
 # 2017-03-14 v2.20 io_out_arg 增加参数
+# 2017-04-28 v2.30 add io_iter_split_step(), 一步步取文件，在遇到大量文件的时候，可以指定步长取文件，比如 10000 一次
+# 2017-05-02 v2.30 add io_path_format()
+# 2017-05-16 v2.40 add io_is_process_run_in_visual_studio()
+# 2017-05-16 v2.50 add io_iter_split_step_pre()
+# 2017-05-30 v2.60 add __all__
+
 
 from __future__ import with_statement
 import os
@@ -35,6 +41,39 @@ try:
     from scandir import walk as local_walk
 except ImportError:
     from os import walk as local_walk
+
+__all__ = [
+    'io_in_arg',
+    'io_bytes_arg',
+    'io_iter_files_from_arg',
+    'io_iter_root_files_from_arg',
+    'io_out_arg',
+    'io_sys_stdout',
+    'io_sys_stderr',
+    'io_print',
+    'io_stderr_print',
+    'io_files_from_arg',
+    'io_is_path_valid',
+    'io_path_format',
+    'io_thread_map',
+    'io_thread_map_one_ins',
+    'dict_item_getter',
+    'io_directory_merge',
+    'io_hash_memory',
+    'io_hash_stream',
+    'io_hash_fullpath',
+    'io_line_is_hash',
+    'io_simple_check_md5',
+    'io_simple_check_hash',
+    'io_simple_check_sha256',
+    'io_simple_check_sha1',
+    'io_iter_split_step',
+    'io_sequence_function',
+    'io_is_process_run_in_visual_studio',
+    'io_from_timestamp',
+    'io_raw_input',
+    'pyver',
+]
 
 
 pyver = sys.version_info[0]  # major
@@ -50,6 +89,8 @@ io_str_codes = (io_in_code, io_out_code)
 
 
 def io_in_arg(arg):
+    if not arg:
+        return arg
     if isinstance(arg, io_in_code):
         return arg
     codes = ['utf-8', 'gbk']
@@ -68,6 +109,8 @@ def io_bytes_arg(arg):
     :param arg:
     :return:
     '''
+    if not arg:
+        return arg
     if isinstance(arg, io_in_code):
         codes = ['utf-8', 'gbk']
         for c in codes:
@@ -212,6 +255,18 @@ def io_is_path_valid(pathname):
     else:
         return True
 
+def io_path_format(fullpath,replace_with=None):
+    '''
+    remove forbidden chars in path
+    :param fullpath: 
+    :return: 
+    '''
+    if not isinstance(fullpath,io_in_code):
+        raise ValueError(u'only support type {0}'.format(io_in_code))
+
+    windows_path_forbidden_chars = u'\\/*?:"<>|'
+    remove_map = dict((ord(char),replace_with if replace_with else None) for char in windows_path_forbidden_chars )
+    return fullpath.translate(remove_map)
 
 def io_thread_map(thread_func,thread_data,max_workers=20):
     '''
@@ -250,6 +305,9 @@ def io_thread_map_one_ins(thread_func,thread_data,ins_generator_func,max_workers
         return list(r)
 
 def dict_item_getter(data, keys):
+    '''
+      dict_item_getter({'1': {'2': {'3': 'hello'}}}, ['1', '2', '3']) = 'hello'
+    '''
     f = lambda x, y: x[y] if y in x else None
     return reduce(f, keys, data)
 
@@ -319,6 +377,181 @@ def io_line_is_hash(line):
     return (re.match(u"[a-fA-F\d]{64}", line) or
             re.match(u"[a-fA-F\d]{40}", line) or
             re.match(u"[a-fA-F\d]{32}", line))
+
+def _io_simple_check_hash(line,hash_length):
+    fn = lambda e: all(i in '1234567890abcdefABCDEF' for i in e)
+    return len(line) == hash_length and fn(line)
+
+def io_simple_check_md5(line):
+    return _io_simple_check_hash(line,32)
+
+def io_simple_check_sha1(line):
+    return _io_simple_check_hash(line,40)
+
+def io_simple_check_sha256(line):
+    return _io_simple_check_hash(line,64)
+
+def io_simple_check_hash(line):
+    return io_simple_check_md5(line) or io_simple_check_sha1(line) or io_simple_check_sha256(line)
+
+
+def _io_iter_split_step(data, split_unit_count):
+    '''
+    :param data:  must be isinstance(data, collections.Iterable):
+    :param split_unit_count: 
+    :return: generator object  iter(tuple)
+
+    see test
+    '''
+    a = iter(data)
+    while True:
+        r = []
+        for _ in range(0, split_unit_count):
+            try:
+                e = next(a)
+                r.append(e)
+            except StopIteration:
+                if r:
+                    yield tuple(r)
+                    r = []
+                else:
+                    raise StopIteration
+        if r:
+            yield tuple(r)
+            r = []
+
+def io_iter_split_step(data, split_unit_count):
+    '''
+    :param data:  must be isinstance(data, collections.Iterable):
+    :param split_unit_count: 
+    :return: generator object  iter(tuple)
+
+    see test
+    '''
+
+    from itertools import islice
+    i = iter(data)
+    while True:
+        # slice return iterable
+        r = tuple(islice(i,split_unit_count))
+        if r:
+            yield (r)
+        else:
+            break
+
+
+def io_iter_split_step_pre(data, split_unit_count):
+    import itertools
+    tasksi = iter(data)
+    pre = itertools.islice(tasksi, 300)
+    pre = tuple(pre)
+    if pre:
+        yield pre
+    for i in io_iter_split_step(tasksi, split_unit_count):
+        yield i
+
+def io_sequence_function(initial,function_sequence):
+    '''
+    :param initial: 
+    :param function_sequence: list of Functions
+    :return: the last function result
+    
+    equivalent :
+        def foo(initial):
+            initial = function_sequence[0](initial)
+            initial = function_sequence[1](initial)
+            initial = function_sequence[2](initial)
+            initial = function_sequence[...](initial)
+            return initial
+    
+    Usage:
+    
+        def f1(x):
+            print ('call f1')
+            if x >1 :
+                return int(x)+1
+            return None
+    
+    
+        def f2(x):
+            print ('call f2')
+            if x >5 :
+                return x+10
+            return None
+        
+        def f3(x):
+            print ('call f3')
+            if x > 10:
+                return x+100
+            return None
+    
+        
+        # _fn = lambda x,y : y(x) if x else None  # 不符合条件的 x 没有使用 y 调用会导致后面的函数无法调用到
+        如以下测试结果
+        fs = [f1,f2,f3]
+        print (io_sequence_function(0,fs)) 
+        None
+        
+        print (io_sequence_function(1,fs))
+        call f1
+        None
+        
+        print (io_sequence_function(7,fs))
+        call f1
+        call f2
+        call f3
+        118
+        
+        使用 _fn = lambda x,y : y(x) 运行结果：
+        fs = [f1,f2,f3]
+        print (io_sequence_function(0,fs)) 
+        call f1
+        call f2
+        call f3
+        None
+                
+        print (io_sequence_function(1,fs))
+        call f1
+        call f2
+        call f3
+        None
+                
+        print (io_sequence_function(7,fs))
+        call f1
+        call f2
+        call f3
+        118
+        
+    '''
+    _fn = lambda x,y : y(x)
+    fs = [initial]
+    fs.extend(function_sequence)
+    return reduce(_fn,fs)
+
+def io_is_process_run_in_visual_studio():
+    import psutil
+    p = psutil.Process().parent()
+    return u'devenv.exe' == p.name() and u'Microsoft Visual Studio' in p.exe()
+
+
+def io_from_timestamp(ts):
+    '''
+    timestamp int to datetime
+	1496121889734 -> 2017-05-30 13:24:49.734000
+    '''
+    import datetime
+
+    ts_str = str(ts)
+    if not ts_str.isdigit():
+        raise ValueError('timestamp must be digit')
+    if len(ts_str) == 10:
+        ts = int(ts)
+    elif len(ts_str) == 13:
+        ts = float(int(ts))/1000
+    elif not (ts == 0):
+        raise ValueError('unexcept timestamp format {0}'.format(ts_str))
+    return datetime.datetime.fromtimestamp(ts)
+
 '''
 end
 '''
@@ -334,8 +567,7 @@ def test_tupple():
     io_print(a)
 
 
-def test():
-    test_unicode_list()
+
 
 
 def test_path():
@@ -346,7 +578,57 @@ def test_path():
         io_print(io_is_path_valid(e))
 
 
-if __name__ == '__main__':
-    test()
+def test_io_is_path_valid():
+    '''
+    c:\1->valid
+    c:\21?->invalid
+    c:\21*->invalid
+    c:\21:->invalid
+    c:\21"->invalid
+    c:\21|->invalid
+    c:\21<->invalid
+    c:\21>->invalid 
+    '''
+
+    _func = lambda p :u'{}->{}'.format(p,u'valid' if io_is_path_valid(p) else u'invalid')
+
+    io_print(_func(u'c:\\1'))
+    io_print(_func(u'c:\\21?'))
+    io_print(_func(u'c:\\21*'))
+    io_print(_func(u'c:\\21:'))
+    io_print(_func(u'c:\\21"'))
+    io_print(_func(u'c:\\21|'))
+    io_print(_func(u'c:\\21<'))
+    io_print(_func(u'c:\\21>'))
+
+
+def test_io_split_step():
+    '''
+    
+    [(1, 2)]
+    [(1, 2, 3, 4), (5, 6, 7)]
+    [(1, 2, 3), (4, 5, 6), (7,)]
+
+    '''
+    cases = [
+        ([1,2], 5, [(1, 2)]),
+        ([1, 2, 3, 4, 5, 6, 7], 4, [(1, 2, 3, 4), (5, 6, 7)]),
+        ([1, 2, 3, 4, 5, 6, 7], 3, [(1, 2, 3), (4, 5, 6), (7,)])
+    ]
+
+    for e in cases:
+        assert (list(io_iter_split_step(e[0],e[1])) == e[2])
+        assert (list(_io_iter_split_step(e[0],e[1])) == e[2])
+
+    print (u'pass {0}'.format(test_io_split_step.__name__))
+
+def test():
+    test_unicode_list()
     test_tupple()
     test_path()
+    test_io_is_path_valid()
+    test_io_split_step()
+
+
+if __name__ == '__main__':
+    test()

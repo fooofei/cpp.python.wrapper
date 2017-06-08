@@ -5,13 +5,15 @@
 
 '''
 
-from __future__ import unicode_literals
-
 import ctypes
 import os
 import sys
-
-from io_in_out import *
+from io_in_out import io_in_arg
+from io_in_out import io_bytes_arg
+from io_in_out import io_out_code
+from io_in_out import io_out_arg
+from io_in_out import io_print
+from io_in_out import pyver
 
 
 curpath = os.path.dirname(os.path.realpath(__file__))
@@ -25,7 +27,6 @@ def io_ctypes_c_char_p(arg):
 
 
 curpath = io_in_arg(curpath)
-
 
 from ctypes import c_uint, c_int, c_void_p, POINTER, \
     c_char_p, sizeof, memset, addressof, \
@@ -105,8 +106,15 @@ class CppExportStructure(ctypes.Structure):
 
 
     def load(self):
-        a = {'nt':'cpp_python.dll'}
-        p = os.path.join(curpath,a.get(os.name,'libcpp_python.so'))
+        a = {u'win32':u'cpp_python.dll',
+             u'linux':u'libcpp_python.so',
+             u'darwin':u'libcpp_python.dylib'}
+        n = filter(sys.platform.startswith,a.keys())
+        assert (len(n) == 1)
+        n = a.get(n[0])
+        if not n:
+            raise ValueError('not found right name')
+        p = os.path.join(curpath,n)
         p = io_out_arg(p, pfn_check=os.path.exists)
         lib = library_loader.LoadLibrary(p)
         if not lib :

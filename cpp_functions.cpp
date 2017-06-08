@@ -91,7 +91,7 @@ int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
 #ifdef WIN32
     wprintf(L"print from cpp->size:(%d),value:(%.*s)",size,(int)size,ptr);
 #else
-    printf("print from cpp->size:(%d),value:(%.*S)",size,(int)size,ptr);
+    printf("print from cpp->size:(%d),value:(%.*ls)",size,(int)size,ptr);
 #endif
     fflush(stdout);
     return E_NO_ERROR;
