@@ -31,7 +31,7 @@ curpath = io_in_arg(curpath)
 from ctypes import c_uint, c_int, c_void_p, POINTER, \
     c_char_p, sizeof, memset, addressof, \
     pointer, create_string_buffer, byref, \
-    c_char, c_wchar_p, c_ubyte, c_double
+    c_char, c_wchar_p, c_ubyte, c_double, create_unicode_buffer, string_at
 
 if os.name == 'nt':
     from ctypes import WINFUNCTYPE as ExportFuncType
@@ -106,7 +106,7 @@ class CppExportStructure(ctypes.Structure):
 
 
     def load(self):
-        a = {u'win32':u'cpp_python.dll',
+        a = {u'win32': r'D:\Visual_Studio_Projects\cpp_python_vs\Debug\cpp_python_vs.dll', #u'cpp_python.dll',
              u'linux':u'libcpp_python.so',
              u'darwin':u'libcpp_python.dylib'}
         n = filter(sys.platform.startswith,a.keys())
@@ -119,7 +119,9 @@ class CppExportStructure(ctypes.Structure):
         lib = library_loader.LoadLibrary(p)
         if not lib :
             raise ValueError('fail load')
+        print ('before init from dll cb={}'.format(self.cb))
         hr = lib.InitExportFunctions(pointer(self))
+        print ('after init from dll cb={}'.format(self.cb))
         assert hr == 0
 
     def reset(self):
@@ -155,14 +157,29 @@ class CppExportStructure(ctypes.Structure):
         io_print('')
 
     def test_func_in_memoryw(self):
-        ''' a wchar_t type value in python, pass it to cpp only for read'''
+        ''' a wchar_t type value in python, pass it to cpp only for read
+        没有使用 create_unicode_buffer(), 这样使用节省内存，并不修改，只读，方便
+        '''
         value = 'this is string in python test_func_in_memoryw'
+        value = value.decode('utf-8')
 
         # can not use pystring_as_string_size
         addr,size = c_wchar_p(value), c_uint(len(value))
+        # 在 Visual Studio 中查看内存，value 的内存竟然是 utf16 的,用中文也是这个长度
         hr = self.pfn_func_in_memoryw(addr,size)
         assert hr ==0
         io_print('')
+
+    def test_func_in_memoryw_chs(self):
+        ''' a wchar_t type value in python, chinese, pass it to cpp only for read
+        '''
+        value = u'这是来自 Python 的字符串，用中文表示，长度'
+        value = value + u'{}'.format(len(value)+2)
+        addr, size = c_wchar_p(value), c_uint(len(value))
+        hr = self.pfn_func_in_memoryw(addr, size)
+        assert hr == 0
+        io_print('')
+
 
     def test_func_out_memory_noalloc(self):
         '''return a memory address and size from cpp, only read in python'''
@@ -196,6 +213,7 @@ def entry():
     a.test_func_change_value_int()
     a.test_func_in_memory()
     a.test_func_in_memoryw()
+    a.test_func_in_memoryw_chs()
     a.test_func_out_memory_noalloc()
     a.test_func_out_memory_alloc()
 

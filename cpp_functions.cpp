@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <algorithm>
 
 // Also can use HRESULT to replace.
 enum 
@@ -38,7 +39,10 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
     func_count = cb/sizeof(void*);
 
     // 2.Increment here
-    func_count = (std::min<unsigned int>)(func_count,version_1_function_count);
+    // conflict  std::min  min
+    // (std::min)<unsigned> Visual Studio 2017 compile error
+    // but not (std::min<unsigned>) 
+    func_count = std::min<unsigned>(func_count,version_1_function_count);
 
     switch (func_count)
     {
@@ -88,8 +92,12 @@ int WINAPI func_in_memory(const char * ptr, unsigned int size)
 int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
 {
     RASSERT_RETURN(ptr,E_ERROR_ARG);
+    
+
 #ifdef WIN32
+    char * restore = setlocale(LC_ALL, "chs");
     wprintf(L"print from cpp->size:(%d),value:(%.*s)",size,(int)size,ptr);
+    setlocale(LC_ALL, restore);
 #else
     printf("print from cpp->size:(%d),value:(%.*ls)",size,(int)size,ptr);
 #endif

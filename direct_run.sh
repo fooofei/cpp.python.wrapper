@@ -8,6 +8,5 @@ cmake .. || exit 1
 make  || exit 1
 
 cd ..
-python  python_caller.py|| exit 1
+python  cpp_python_test.py|| exit 1
 rm -rf build
-#python clear.py
