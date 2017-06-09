@@ -69,7 +69,7 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
 
 int WINAPI func_empty()
 {
-    printf("call func_empty()");
+    printf("cpp_print->[len:36]call func_empty()\n");
     fflush(stdout);
     return E_NO_ERROR;
 }
@@ -77,6 +77,8 @@ int WINAPI func_empty()
 int WINAPI func_change_value_int(unsigned int * pvalue)
 {
     RASSERT_RETURN(pvalue,E_ERROR_ARG);
+    printf("cpp_print->get value int from python [%u], change to 110.\n",*pvalue);
+    fflush(stdout);
     *pvalue = 110;
     return E_NO_ERROR;
 }
@@ -84,7 +86,7 @@ int WINAPI func_change_value_int(unsigned int * pvalue)
 int WINAPI func_in_memory(const char * ptr, unsigned int size)
 {
     RASSERT_RETURN(ptr,E_ERROR_ARG);
-    printf("print from cpp->size:(%d),value:(%.*s)",size,(int)size,ptr);
+    printf("cpp_print->memory from python [0x%p][%u]value:(%.*s)\n",ptr,size,(int)size,ptr);
     fflush(stdout);
     return E_NO_ERROR;
 }
@@ -96,10 +98,10 @@ int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
 
 #ifdef WIN32
     char * restore = setlocale(LC_ALL, "chs");
-    wprintf(L"print from cpp->size:(%d),value:(%.*s)",size,(int)size,ptr);
+    wprintf(L"cpp_print->[0x%p][%u]value:(%.*s)\n",ptr,size,(int)size,ptr);
     setlocale(LC_ALL, restore);
 #else
-    printf("print from cpp->size:(%d),value:(%.*ls)",size,(int)size,ptr);
+    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,(int)size,ptr);
 #endif
     fflush(stdout);
     return E_NO_ERROR;
@@ -110,6 +112,10 @@ int WINAPI func_out_memory_alloc(void * out_ptr, unsigned int * out_ptr_size)
     const char * p = "out string from cpp in func_out_memory_alloc";
     RASSERT_RETURN(out_ptr_size, E_ERROR_ARG);
     unsigned int l = (unsigned int)strlen(p);
+
+    printf("cpp_print->out string [%u],%s\n", l, p);
+    printf("cpp_print->get args [addr:0x%p],[size:%u]\n",out_ptr,*out_ptr_size);
+    fflush(stdout);
 
     if (out_ptr)
     {
@@ -135,6 +141,9 @@ int WINAPI func_out_memory_noalloc(const void ** out_ptr, unsigned int * out_ptr
     RASSERT_RETURN(out_ptr && out_ptr_size, E_ERROR_ARG);
     const char * p = g_p;
     unsigned int l = (unsigned int)strlen(p);
+
+    printf("cpp_print->out string [%u],%s\n", l, p);
+    printf("cpp_print->return [addr:0x%p],[size:%u]\n", p, l);
 
     *out_ptr = p;
     *out_ptr_size = l;
