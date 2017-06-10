@@ -33,6 +33,9 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
     unsigned int func_count ;
 
     cb = arg->cb;
+    if((cb<=0)) {
+        return  E_ERROR_ARG;
+    }
     cb -= 4;
 
     RASSERT_RETURN(cb%sizeof(void*)==0,E_ERROR_ARG);
@@ -94,15 +97,13 @@ int WINAPI func_in_memory(const char * ptr, unsigned int size)
 int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
 {
     RASSERT_RETURN(ptr,E_ERROR_ARG);
-    
 
-#ifdef WIN32
-    char * restore = setlocale(LC_ALL, "chs");
-    wprintf(L"cpp_print->[0x%p][%u]value:(%.*s)\n",ptr,size,(int)size,ptr);
+    char * restore = setlocale(LC_ALL,"zh_CN.UTF-8");
+    unsigned p_size = size*sizeof(wchar_t); // TODO ?
+
+    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,p_size,ptr);
+
     setlocale(LC_ALL, restore);
-#else
-    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,(int)size,ptr);
-#endif
     fflush(stdout);
     return E_NO_ERROR;
 }

@@ -1,4 +1,4 @@
-﻿#coding=utf-8
+﻿# coding=utf-8
 '''
 
  compatible with python 2,3
@@ -14,24 +14,22 @@ from io_in_out import io_out_code
 from io_in_out import io_out_arg
 from io_in_out import io_print
 from io_in_out import pyver
+from io_in_out import io_stderr_print
 
+from ctypes import c_uint
+from ctypes import c_int
+from ctypes import memset
+from ctypes import addressof
+from ctypes import create_string_buffer
+from ctypes import c_char_p
+from ctypes import c_void_p
+from ctypes import POINTER
+from ctypes import pointer
+from ctypes import c_wchar_p
+from ctypes import sizeof
 
 curpath = os.path.dirname(os.path.realpath(__file__))
-
-def io_ctypes_c_char_p(arg):
-    global pyver
-    if pyver >= 3:
-        return c_char_p(io_bytes_arg(io_in_arg(arg)))
-    else:
-        return c_char_p(io_bytes_arg(arg))
-
-
 curpath = io_in_arg(curpath)
-
-from ctypes import c_uint, c_int, c_void_p, POINTER, \
-    c_char_p, sizeof, memset, addressof, \
-    pointer, create_string_buffer, byref, \
-    c_char, c_wchar_p, c_ubyte, c_double, create_unicode_buffer, string_at
 
 if os.name == 'nt':
     from ctypes import WINFUNCTYPE as ExportFuncType
@@ -40,182 +38,138 @@ else:
     from ctypes import CFUNCTYPE as ExportFuncType
     from ctypes import cdll as library_loader
 
-if '__pypy__' in sys.builtin_module_names:
-    class PyDLL(ctypes.CDLL):
-        _func_flags_ = ctypes._FUNCFLAG_CDECL | ctypes._FUNCFLAG_PYTHONAPI
+
+def ctypes_cast_c_void_p(v):
+    return ctypes.cast(v, ctypes.c_void_p)
 
 
-    if os.name in ("nt", "ce"):
-        pythonapi = PyDLL("libpypy-c.dll")
-    else:
-        pythonapi = PyDLL('libpypy-c.so')
-    PyString_AsStringAndSize = pythonapi.PyPyString_AsStringAndSize
-
-else:
-    pythonapi = ctypes.pythonapi
-    if pyver >= 3:
-        func = pythonapi.PyBytes_AsStringAndSize
-    elif pyver == 2:
-        func = pythonapi.PyString_AsStringAndSize
-    else:
-        func = pythonapi.PyString_AsStringAndSize
-
-    PyString_AsStringAndSize = func
-
-if hasattr(pythonapi, 'Py_InitModule4'):
-    Py_ssize_t = ctypes.c_int
-elif hasattr(pythonapi, 'Py_InitModule4_64'):
-    Py_ssize_t = ctypes.c_int64
-else:
-    Py_ssize_t = ctypes.c_int
-    # raise TypeError("Cannot determine type of Py_ssize_t")
-
-# pypy 里的 py_object 不能传递 str ，死路了
-
-PyString_AsStringAndSize.restype = ctypes.c_int
-PyString_AsStringAndSize.argtypes = [ctypes.py_object,
-                                     ctypes.POINTER(
-                                         ctypes.POINTER(ctypes.c_char)),
-                                     ctypes.POINTER(Py_ssize_t)]
+# cast 为 ctypes.c_char_p 无法打印整型的地址，会把字符串输出
+def bytes_string_address(v): return ctypes_cast_c_void_p(v)
 
 
-def pystring_as_string_size(pystring):
-    if not isinstance(pystring, io_out_code):
-        raise ValueError('arg must be {0}'.format(io_out_code))
-    addr = POINTER(c_char)()
-    size = Py_ssize_t(0)
+def bytes_string_address2(v):
+    return ctypes.cast(
+        ctypes.cast(v, ctypes.c_char_p)
+        , ctypes.c_void_p)
 
-    hr = PyString_AsStringAndSize(pystring, pointer(addr), pointer(size))
-    return (hr, addr, c_uint(size.value))
+
+def bytes_string_2_ctypes_c_char_p(v):
+    # 我怕直接 ctypes.cast(v,ctypes.c_char_p) 会有内存申请
+    return ctypes.cast(
+        bytes_string_address(v)
+        , ctypes.c_char_p
+    )
+
+
+# 知道上面两个等价后 下面这个我们就放心使用了
+def text_string_address(v):
+    return ctypes.cast(ctypes.cast(v, ctypes.c_wchar_p), ctypes.c_void_p)
+
+
+def ctypes_memory_view(addr, addr_size):
+    ''' Read addr memory, not copy.
+    addr: int
+    addr_size: int, not ctypes.c_uint
+    '''
+    return (ctypes.c_ubyte * addr_size).from_address(addr)
 
 
 class CppExportStructure(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ('cb',c_uint),
-        ('pfn_func_empty',ExportFuncType(c_int)),
-        ('pfn_func_change_value_int',ExportFuncType(c_int,POINTER(c_uint))),
-        ('pfn_func_in_memory',ExportFuncType(c_int,c_char_p,c_uint)),
-        ('pfn_func_in_memoryw',ExportFuncType(c_int,c_wchar_p,c_uint)),
-        ('pfn_func_out_memory_noalloc',ExportFuncType(c_int,POINTER(c_void_p),POINTER(c_uint))),
-        ('pfn_func_out_memory_alloc',ExportFuncType(c_uint,c_void_p,POINTER(c_uint))),
+        ('cb', c_uint),
+        ('pfn_func_empty', ExportFuncType(c_int)),
+        ('pfn_func_change_value_int', ExportFuncType(c_int, POINTER(c_uint))),
+        ('pfn_func_in_memory', ExportFuncType(c_int, c_char_p, c_uint)),
+        ('pfn_func_in_memoryw', ExportFuncType(c_int, c_wchar_p, c_uint)),
+        ('pfn_func_out_memory_noalloc', ExportFuncType(c_int, POINTER(c_void_p), POINTER(c_uint))),
+        ('pfn_func_out_memory_alloc', ExportFuncType(c_uint, c_void_p, POINTER(c_uint))),
     ]
 
     def __init__(self):
         self.reset()
 
-
-    def load(self):
-        a = {u'win32': r'D:\Visual_Studio_Projects\cpp_python_vs\Debug\cpp_python_vs.dll', #u'cpp_python.dll',
-             u'linux':u'libcpp_python.so',
-             u'darwin':u'libcpp_python.dylib'}
-        n = filter(sys.platform.startswith,a.keys())
-        assert (len(n) == 1)
-        n = a.get(n[0])
-        if not n:
-            raise ValueError('not found right name')
-        p = os.path.join(curpath,n)
-        p = io_out_arg(p, pfn_check=os.path.exists)
+    def loadlib(self, fullpath_dll):
+        p = io_out_arg(fullpath_dll, pfn_check=os.path.exists)
         lib = library_loader.LoadLibrary(p)
-        if not lib :
+        if not lib:
             raise ValueError('fail load')
-        print ('before init from dll cb={}'.format(self.cb))
+
         hr = lib.InitExportFunctions(pointer(self))
-        print ('after init from dll cb={}'.format(self.cb))
+
         assert hr == 0
+        return (hr, 0)
 
     def reset(self):
-        memset(addressof(self),0,sizeof(CppExportStructure))
+        memset(addressof(self), 0, sizeof(CppExportStructure))
         self.cb = sizeof(CppExportStructure)
 
-    def test_func_empty(self):
+    def empty(self):
         hr = self.pfn_func_empty()
-        assert hr == 0
-        io_print('')
+        assert (hr == 0)
+        return (hr, 0)
 
-
-    def test_func_change_value_int(self):
-        ''' a value in python , pass to cpp, change it in cpp, and see the change in python '''
-        v = c_uint(0)
+    def change_value_int(self, value):
+        ''' A value in python , pass to cpp, change it in cpp, and see the change in python '''
+        v = c_uint(value)
         # POINTER() 比 pointer() 速度快，但功能少, POINTER() 适合不修改传入参数时使用
         hr = self.pfn_func_change_value_int(pointer(v))
-        assert hr ==0
-        io_print('test_func_change_value_int: 0->{0}'.format(v.value))
+        assert (hr == 0)
+        return (hr, v.value)
 
-    def test_func_in_memory(self):
-        '''a memory(void * or char * or byte *) in python, pass it to cpp only for read'''
-        value = 'this is string in python test_func_in_memory'
-        hr , addr, size = pystring_as_string_size(io_bytes_arg(value))
-        assert hr == 0
+    def pass_python_bytes_string(self, bytes_string):
+        '''A memory(void * or char * or byte *) in python, pass it to cpp only for read
 
-        # also can use
-        # addr, size = c_char_p(io_bytes_arg(value)), c_uint(len(value))
-        # The use of pystring_as_string_size() can save a lot of memory
-
-        hr = self.pfn_func_in_memory(addr,size)
-        assert hr == 0
-        io_print('')
-
-    def test_func_in_memoryw(self):
-        ''' a wchar_t type value in python, pass it to cpp only for read
-        没有使用 create_unicode_buffer(), 这样使用节省内存，并不修改，只读，方便
+           Also we can use
+           addr = c_char_p(bytes_string)
+           but it will do copy, alloc memory.
         '''
-        value = 'this is string in python test_func_in_memoryw'
-        value = value.decode('utf-8')
+        addr = bytes_string_2_ctypes_c_char_p(bytes_string)
+        # 非必须
+        # addr_size=ctypes.c_uint(len(bytes_string))
+        hr = self.pfn_func_in_memory(addr, len(bytes_string))
+        assert (hr == 0)
+        return (hr,)
 
-        # can not use pystring_as_string_size
-        addr,size = c_wchar_p(value), c_uint(len(value))
-        # 在 Visual Studio 中查看内存，value 的内存竟然是 utf16 的,用中文也是这个长度
-        hr = self.pfn_func_in_memoryw(addr,size)
-        assert hr ==0
-        io_print('')
-
-    def test_func_in_memoryw_chs(self):
-        ''' a wchar_t type value in python, chinese, pass it to cpp only for read
+    def pass_python_unicode_string(self, unicode_string):
+        ''' A wchar_t string value in python, pass it to cpp only for read
         '''
-        value = u'这是来自 Python 的字符串，用中文表示，长度'
-        value = value + u'{}'.format(len(value)+2)
-        addr, size = c_wchar_p(value), c_uint(len(value))
-        hr = self.pfn_func_in_memoryw(addr, size)
-        assert hr == 0
-        io_print('')
 
+        # Can not use pystring_as_string_size
+        addr_buffer = ctypes.create_unicode_buffer(unicode_string)
+        # addr_buffer = ctypes.c_wchar_p(unicode_string)
+        # In Visual Studio, debug it, see the unicode is utf16(2 bytes)
+        hr = self.pfn_func_in_memoryw(addr_buffer, len(unicode_string))
+        assert (hr == 0)
+        return (hr,)
 
-    def test_func_out_memory_noalloc(self):
+    def out_memory_python_noalloc(self):
         '''return a memory address and size from cpp, only read in python'''
-        ptr = c_void_p(0)
-        ptr_size = c_uint(0)
-        hr = self.pfn_func_out_memory_noalloc(pointer(ptr),pointer(ptr_size))
-        assert  hr ==0 and ptr.value and ptr_size.value
 
-        memory_for_read = (ctypes.c_ubyte * ptr_size.value).from_address(ptr.value)
-        # cast const void * to const char *
-        v = ctypes.cast(memory_for_read,ctypes.c_char_p)
-        io_print(v.value)
+        addr = ctypes.c_void_p(0)
+        addr_size = ctypes.c_uint(0)
+        pfn = self.pfn_func_out_memory_noalloc
+        hr = pfn(ctypes.pointer(addr), ctypes.pointer(addr_size))
+        assert (hr == 0 and addr_size.value > 0)
+        io_print(u'python_print->ctypes 从 cpp 返回的字符串内存地址 {}'.format(
+            hex(addr.value)
+        ))
+        vm = ctypes_memory_view(addr.value, addr_size.value)
+        # Cast const void * -> const char *
+        v = ctypes.cast(vm, ctypes.c_char_p)
+        return (hr, v.value)
 
-    def test_func_out_memory_alloc(self):
-        ''''''
-        ptr_size = c_uint(0)
-        # first call get size
-        hr = self.pfn_func_out_memory_alloc(c_void_p(0),pointer(ptr_size))
-        assert  hr ==0 and ptr_size.value
-        ptr = create_string_buffer(ptr_size.value)
-        # second get memory address
-        hr = self.pfn_func_out_memory_alloc(ptr,pointer(ptr_size))
-        assert hr==0 and ptr_size.value
-        io_print(ptr.value)
+    def out_memory_python_alloc(self):
+        ''' Alloc memory in python, pass it to cpp modify it. '''
 
-
-def entry():
-    a = CppExportStructure()
-    a.load()
-    a.test_func_empty()
-    a.test_func_change_value_int()
-    a.test_func_in_memory()
-    a.test_func_in_memoryw()
-    a.test_func_in_memoryw_chs()
-    a.test_func_out_memory_noalloc()
-    a.test_func_out_memory_alloc()
-
-if __name__ == '__main__':
-    entry()
+        addr_size = ctypes.c_uint(0)
+        pfn = self.pfn_func_out_memory_alloc
+        hr = pfn(ctypes.c_void_p(0), pointer(addr_size))
+        assert (hr == 0 and addr_size.value > 0)
+        addr = ctypes.create_string_buffer(addr_size.value)
+        io_print(u'python_print->ctypes 提供申请的字符串内存地址 {}'.format(
+            hex(ctypes.addressof(addr))
+        ))
+        hr = pfn(addr, pointer(addr_size))
+        assert (hr == 0)
+        return (hr, addr.value)
