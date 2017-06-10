@@ -106,8 +106,9 @@ int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
     char * restore = setlocale(LC_ALL,local);
     unsigned p_size = size*sizeof(wchar_t); // TODO ?
 
-    //printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,p_size,ptr);
-    wprintf(L"cpp_print->[0x%p][%u]value:(%s)\n",ptr,size,ptr);
+    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,p_size,ptr);
+
+
 
     setlocale(LC_ALL, restore);
     fflush(stdout);
