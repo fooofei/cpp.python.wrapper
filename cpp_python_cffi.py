@@ -123,6 +123,7 @@ class CffiExportStructure(object):
         value = self._cffi_ins.buffer(ptr[0], size[0])
 
         # value2 = value[:] # 这样是生成了新的字符串
+        # cffi 这里没申请内存 但是类型是 buffer 的
         return (hr, value)
 
     def out_memory_python_alloc(self):

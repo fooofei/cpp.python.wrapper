@@ -97,11 +97,17 @@ int WINAPI func_in_memory(const char * ptr, unsigned int size)
 int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
 {
     RASSERT_RETURN(ptr,E_ERROR_ARG);
+    #ifdef WIN32
+        const char * local = "chs";
+    #else
+        const char * local = "zh_CN.UTF-8";
+    #endif
 
-    char * restore = setlocale(LC_ALL,"zh_CN.UTF-8");
+    char * restore = setlocale(LC_ALL,local);
     unsigned p_size = size*sizeof(wchar_t); // TODO ?
 
-    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,p_size,ptr);
+    //printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,p_size,ptr);
+    wprintf(L"cpp_print->[0x%p][%u]value:(%s)\n",ptr,size,ptr);
 
     setlocale(LC_ALL, restore);
     fflush(stdout);
