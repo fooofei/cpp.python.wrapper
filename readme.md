@@ -17,7 +17,7 @@ linux/unix 使用 cdecl
 
 1 install cmake
 
-2 run direct_run.bat on Windows, run direct_run.sh on *unix 
+2 run direct_run.bat on Windows, run direct_run.sh on linux/unix
 
 3 see output
 
