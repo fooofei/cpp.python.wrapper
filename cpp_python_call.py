@@ -31,6 +31,23 @@ ffi = cffi.FFI()
 cffi_address_of = lambda v: ffi.addressof(ffi.from_buffer(v))
 
 
+def c_bytes_string_address(v):
+    if sys.platform.startswith('win32'):
+        import string_address
+        r = string_address.PyString_AddressSize(v)
+        assert (r)
+        assert (r[1] == len(v))
+        io_print(u'python_print->address by c {}'.format(hex(r[0])))
+
+def c_unicode_string_address(v):
+    if sys.platform.startswith('win32'):
+        import string_address
+        r = string_address.PyUnicodeString_AddressSize(v)
+        assert (r)
+        assert (r[1] == len(v)*ctypes.sizeof(ctypes.c_wchar))
+        io_print(u'python_print->address by c {}'.format(hex(r[0])))
+
+
 def change_value_int(ins):
     io_print(u'test_func_change_value_int')
     v = 2
@@ -53,6 +70,8 @@ def pass_python_bytes_string(ins):
 
     ctypes_addr2 = bytes_string_address2(v)
     io_print(u'python_print->address by ctypes bytes_string_address2 {}'.format(hex(ctypes_addr2.value)))
+
+    c_bytes_string_address(v)
 
     # check
     x = ffi.cast('void*', ctypes_addr.value)
@@ -80,11 +99,15 @@ def pass_python_unicode_string(ins):
     ctypes_addr = text_string_address(v)
     io_print(u'python_print->address by ctypes text_string_address {}'.format(hex(ctypes_addr.value)))
 
+    c_unicode_string_address(v)
+
     # 逆向操作 再次读取 检查值相等
     # x = ctypes.wstring_at(ctypes_addr, len(v))
     # assert (x == v)
 
-    r = ins.pass_python_unicode_string(v)
+    # TODO not right on none_Windows platform
+    r = ins.pass_python_unicode_string2(ctypes_addr.value, len(v))
+    #r = ins.pass_python_unicode_string(v)
     io_print('')
 
     ##
@@ -94,9 +117,12 @@ def pass_python_unicode_string(ins):
     ctypes_addr = text_string_address(v)
     io_print(u'python_print->address by ctypes text_string_address {}'.format(hex(ctypes_addr.value)))
 
+    c_unicode_string_address(v)
+
     # x = ctypes.wstring_at(ctypes_addr, len(v))
     # assert (x == v)
-    r = ins.pass_python_unicode_string(v)
+    #r = ins.pass_python_unicode_string(v)
+    r = ins.pass_python_unicode_string2(ctypes_addr.value,len(v))
     io_print('')
 
 
@@ -152,7 +178,7 @@ def entry():
 
     p = os.path.join(curpath, n)
     # p = os.path.join(curpath,u'cmake-build-debug',u'libcpp_python.dylib')
-
+    # p = r'D:\Visual_Studio_Projects\cpp_python_vs\Debug\cpp_python_vs.dll'
 
 
     ins = CffiExportStructure(p)

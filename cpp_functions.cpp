@@ -94,6 +94,19 @@ int WINAPI func_in_memory(const char * ptr, unsigned int size)
     return E_NO_ERROR;
 }
 
+void print_hex(const void * ptr, size_t l)
+{
+    printf("hex value: ");
+    const unsigned char * p = (const unsigned char *)ptr;
+    for (size_t i=0;i<l;++i)
+    {
+        printf("%02x ", *(p + i));
+    }
+    printf("\n");
+    fflush(stdout);
+}
+
+
 int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
 {
     RASSERT_RETURN(ptr,E_ERROR_ARG);
@@ -102,6 +115,8 @@ int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
     #else
         const char * local = "zh_CN.UTF-8";
     #endif
+
+    print_hex(ptr, size * sizeof(wchar_t));
 
     char * restore = setlocale(LC_ALL,local);
     unsigned p_size = size*sizeof(wchar_t); // TODO ?

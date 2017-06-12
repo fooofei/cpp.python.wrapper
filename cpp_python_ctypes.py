@@ -143,6 +143,12 @@ class CppExportStructure(ctypes.Structure):
         assert (hr == 0)
         return (hr,)
 
+    def pass_python_unicode_string2(self, ptr, size):
+        ptr = ctypes.cast(ptr,ctypes.c_wchar_p)
+        hr = self.pfn_func_in_memoryw(ptr, size)
+        assert (hr == 0)
+        return (hr,)
+
     def out_memory_python_noalloc(self):
         '''return a memory address and size from cpp, only read in python'''
 

@@ -110,8 +110,12 @@ class CffiExportStructure(object):
 
     def pass_python_unicode_string2(self, ptr, len_):
         '''
-        直接传递内存地址（尝试失败了）
+        直接传递内存地址（尝试失败了, 20170612 在写了 c 的 py_string_address 之后尝试成功）
+
+        ptr : int
+        size : int
         '''
+        ptr = self._cffi_ins.cast('const wchar_t *',ptr)
         hr = self._c_export_functions.pfn_func_in_memoryw(ptr, len_)
         assert hr == 0
         return (hr,)
