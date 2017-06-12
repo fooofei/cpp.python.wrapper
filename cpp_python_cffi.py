@@ -1,4 +1,4 @@
-# coding=utf-8
+﻿# coding=utf-8
 
 
 import io_in_out
@@ -11,6 +11,7 @@ class CffiExportStructure(object):
     官方文档只说了 ffi.buffer(cdata, [size]) 不申请内存，
     我测试 ffi.string(cdata, [maxlen]) 重新申请了内存,
     ffi.new(cdecl, init=None) 申请内存.
+        # 错误使用 new cdata char[] 不能使用 <value>[:] 来转为 python bytes string
 
     ffi.from_buffer(python_buffer)  python string -> raw C data
     ffi.buffer(cdata, [size])  raw C data -> cffi buffer
@@ -38,6 +39,8 @@ class CffiExportStructure(object):
 
         print ('cffi version :{}'.format(cffi.__version_info__))
 
+        # Cannot use  extern "C" in function declaration
+
         ffi.cdef(
             '''
     
@@ -51,7 +54,7 @@ class CffiExportStructure(object):
         int (WINAPI * pfn_func_out_memory_noalloc)(const void ** out_ptr, unsigned int * out_ptr_size);
         int (WINAPI * pfn_func_out_memory_alloc)(void * out_ptr, unsigned int * out_ptr_size);
     }ExportFunctions;
-      int WINAPI InitExportFunctions(ExportFunctions *);
+   int WINAPI InitExportFunctions(ExportFunctions *);
     '''
             , packed=True)
 
@@ -124,6 +127,9 @@ class CffiExportStructure(object):
 
         # value2 = value[:] # 这样是生成了新的字符串
         # cffi 这里没申请内存 但是类型是 buffer 的
+        # buffer not have startwith attr
+        # value.startwith('adadfs') error
+        # value.decode('utf-8') error
         return (hr, value)
 
     def out_memory_python_alloc(self):
