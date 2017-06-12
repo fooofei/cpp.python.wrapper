@@ -39,32 +39,32 @@ else:
     from ctypes import cdll as library_loader
 
 
-def ctypes_cast_c_void_p(v):
-    return ctypes.cast(v, ctypes.c_void_p)
+def ctypes_api_bytes_string_addr(v):
+    ''' Return int '''
+    f = ctypes.pythonapi.PyString_AsString
+    f.restype = ctypes.c_void_p
+    f.argtypes = [ctypes.py_object]
+    return f(v)
+
+def ctypes_api_unicode_string_addr(v):
+    ''' Return int  '''
+    py_unicode_size = ctypes.sizeof(ctypes.c_wchar)
+    if py_unicode_size == 2:
+        f = ctypes.pythonapi.PyUnicodeUCS2_AsUnicode
+    elif py_unicode_size==4:
+        f = ctypes.pythonapi.PyUnicodeUCS4_AsUnicode
+    else:
+        raise TypeError("Cannot determine wchar_t size")
+    f.restype = ctypes.c_void_p
+    f.argtypes = [ctypes.py_object]
+    return f(v)
 
 
-# cast 为 ctypes.c_char_p 无法打印整型的地址，会把字符串输出
-def bytes_string_address(v): return ctypes_cast_c_void_p(v)
+def bytes_string_address(v):
+    return ctypes_api_bytes_string_addr(v)
 
-
-def bytes_string_address2(v):
-    return ctypes.cast(
-        ctypes.cast(v, ctypes.c_char_p)
-        , ctypes.c_void_p)
-
-
-def bytes_string_2_ctypes_c_char_p(v):
-    # 我怕直接 ctypes.cast(v,ctypes.c_char_p) 会有内存申请
-    return ctypes.cast(
-        bytes_string_address(v)
-        , ctypes.c_char_p
-    )
-
-
-# 知道上面两个等价后 下面这个我们就放心使用了
 def text_string_address(v):
-    return ctypes.cast(ctypes.cast(v, ctypes.c_wchar_p), ctypes.c_void_p)
-
+    return ctypes_api_unicode_string_addr(v)
 
 def ctypes_memory_view(addr, addr_size):
     ''' Read addr memory, not copy.
@@ -124,9 +124,10 @@ class CppExportStructure(ctypes.Structure):
            addr = c_char_p(bytes_string)
            but it will do copy, alloc memory.
         '''
-        addr = bytes_string_2_ctypes_c_char_p(bytes_string)
+        addr = ctypes_api_bytes_string_addr(bytes_string)
         # 非必须
         # addr_size=ctypes.c_uint(len(bytes_string))
+        addr = ctypes.cast(addr,ctypes.c_char_p)
         hr = self.pfn_func_in_memory(addr, len(bytes_string))
         assert (hr == 0)
         return (hr,)
@@ -144,6 +145,10 @@ class CppExportStructure(ctypes.Structure):
         return (hr,)
 
     def pass_python_unicode_string2(self, ptr, size):
+        '''
+        :param ptr:  int
+        :param size: int
+        '''
         ptr = ctypes.cast(ptr,ctypes.c_wchar_p)
         hr = self.pfn_func_in_memoryw(ptr, size)
         assert (hr == 0)

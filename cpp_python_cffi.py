@@ -3,7 +3,25 @@
 
 import io_in_out
 from io_in_out import io_print
+import cffi
 
+
+def cffi_buffer_2_str(v):
+    if not isinstance(v,cffi.FFI().buffer):
+        raise TypeError('not cffi buffer type')
+
+    return v[:]
+
+def cffi_address_2_int(v):
+    return int(cffi.FFI().cast('uintptr_t',v))
+
+def address_of_cffi_buffer(v):
+    ffi = cffi.FFI()
+    if not isinstance(v, ffi.buffer):
+        raise TypeError('not cffi buffer type')
+
+    x = ffi.addressof(ffi.from_buffer(v))
+    return cffi_address_2_int(x)
 
 class CffiExportStructure(object):
     '''
