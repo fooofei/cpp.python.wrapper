@@ -136,7 +136,7 @@ def cpp_python_framework(ins):
 
 
 def entry():
-    from cpp_python_cffi import CffiExportStructure
+
     from cpp_python_ctypes import CppExportStructure
 
     a = {u'win32': u'cpp_python.dll',
@@ -153,14 +153,24 @@ def entry():
     # p = r'D:\Visual_Studio_Projects\cpp_python_vs\Debug\cpp_python_vs.dll'
 
 
-    ins = CffiExportStructure(p)
-    assert (ins.valid)
-    cpp_python_framework(ins)
+
 
     ins = CppExportStructure()
     ins.loadlib(p)
     cpp_python_framework(ins)
 
+    is_has_cffi = False
+    try:
+        import cffi
+        is_has_cffi = True
+    except ImportError:
+        pass
+
+    if is_has_cffi:
+        from cpp_python_cffi import CffiExportStructure
+        ins = CffiExportStructure(p)
+        assert (ins.valid)
+        cpp_python_framework(ins)
 
 if __name__ == '__main__':
     entry()
