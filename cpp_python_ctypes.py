@@ -46,25 +46,53 @@ def ctypes_api_bytes_string_addr(v):
     f.argtypes = [ctypes.py_object]
     return f(v)
 
-def ctypes_api_unicode_string_addr(v):
-    ''' Return int  '''
+
+def _ctypes_api_unicode_string_address_api():
+    '''
+    Can be error:
+        AttributeError: python: undefined symbol: PyUnicodeUCS2_AsUnicode
+    '''
     py_unicode_size = ctypes.sizeof(ctypes.c_wchar)
     if py_unicode_size == 2:
         f = ctypes.pythonapi.PyUnicodeUCS2_AsUnicode
-    elif py_unicode_size==4:
+    elif py_unicode_size == 4:
         f = ctypes.pythonapi.PyUnicodeUCS4_AsUnicode
     else:
         raise TypeError("Cannot determine wchar_t size")
     f.restype = ctypes.c_void_p
     f.argtypes = [ctypes.py_object]
-    return f(v)
+    return f
+
+
+def ctypes_api_unicode_string_addr(v):
+    '''
+    !!!WARNING not always success
+
+    1 Python redefine api PyUnicode_* as PyUnicodeUCS2_* or PyUnicodeUCS4_*,
+     so we see the source code is PyUnicode_* , but through ida the lib binary,
+     we only find PyUnicodeUCS2_* or PyUnicodeUCS4_*.
+
+    2 Python says, use PyUnicode_FromWideChar/PyUnicode_AsWideChar to support Platform wchar_t.
+
+    3 PyUnicode_FromWideChar/PyUnicode_AsWideChar will copy buffer, which will use external memory.
+
+    4 If the platform sizeof(wchar_t)==4, it can aslo maybe use PyUnicodeUCS2_* apis, by this, we cannot
+       get the internal buffer address.
+    '''
+
+    try:
+        return _ctypes_api_unicode_string_address_api()(v)
+    except (TypeError, AttributeError) as er:
+        return 0
 
 
 def bytes_string_address(v):
     return ctypes_api_bytes_string_addr(v)
 
+
 def text_string_address(v):
     return ctypes_api_unicode_string_addr(v)
+
 
 def ctypes_memory_view(addr, addr_size):
     ''' Read addr memory, not copy.
@@ -127,7 +155,7 @@ class CppExportStructure(ctypes.Structure):
         addr = ctypes_api_bytes_string_addr(bytes_string)
         # 非必须
         # addr_size=ctypes.c_uint(len(bytes_string))
-        addr = ctypes.cast(addr,ctypes.c_char_p)
+        addr = ctypes.cast(addr, ctypes.c_char_p)
         hr = self.pfn_func_in_memory(addr, len(bytes_string))
         assert (hr == 0)
         return (hr,)
@@ -149,7 +177,7 @@ class CppExportStructure(ctypes.Structure):
         :param ptr:  int
         :param size: int
         '''
-        ptr = ctypes.cast(ptr,ctypes.c_wchar_p)
+        ptr = ctypes.cast(ptr, ctypes.c_wchar_p)
         hr = self.pfn_func_in_memoryw(ptr, size)
         assert (hr == 0)
         return (hr,)

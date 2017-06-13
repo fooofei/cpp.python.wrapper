@@ -61,13 +61,15 @@ def pass_python_unicode_string(ins):
     addr = text_string_address(v)
     io_print(u'python_print->address by ctypes api {}'.format(hex(addr)))
 
-
-    assert (v
-            == ctypes.wstring_at(addr,len(v))
-            )
+    if not(addr==0):
+        assert (v
+                == ctypes.wstring_at(addr,len(v))
+                )
 
     ins.pass_python_unicode_string(v)
-    ins.pass_python_unicode_string2(addr,len(v))
+
+    if not (addr==0):
+        ins.pass_python_unicode_string2(addr,len(v))
 
     io_print('')
 
@@ -79,12 +81,14 @@ def pass_python_unicode_string(ins):
 
     io_print(u'python_print->address by ctypes api {}'.format(hex(addr)))
 
-    assert (v
-            == ctypes.wstring_at(addr, len(v))
-            )
+    if not(addr==0):
+        assert (v
+                == ctypes.wstring_at(addr, len(v))
+                )
 
     ins.pass_python_unicode_string(v)
-    r = ins.pass_python_unicode_string2(addr,len(v))
+    if not (addr==0):
+        r = ins.pass_python_unicode_string2(addr,len(v))
     io_print('')
 
 
