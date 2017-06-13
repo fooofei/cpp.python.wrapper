@@ -21,4 +21,12 @@ linux/unix 使用 cdecl
 
 3 see output
 
+
+## platforms
+
+python2
+
+win32, linux, macOS
+
+
 clear.py 不再使用
