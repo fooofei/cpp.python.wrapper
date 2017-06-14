@@ -6,40 +6,15 @@ from io_in_out import io_print
 import cffi
 
 
-def cffi_buffer_2_str(v):
-    if not isinstance(v,cffi.FFI().buffer):
-        raise TypeError('not cffi buffer type')
-
-    return v[:]
-
 def cffi_address_2_int(v):
     return int(cffi.FFI().cast('uintptr_t',v))
 
 def address_of_cffi_buffer(v):
     ffi = cffi.FFI()
-    if not isinstance(v, ffi.buffer):
-        raise TypeError('not cffi buffer type')
-
-    x = ffi.addressof(ffi.from_buffer(v))
+    x =  ffi.from_buffer(v)
     return cffi_address_2_int(x)
 
 class CffiExportStructure(object):
-    '''
-    http://cffi.readthedocs.io/en/latest/ref.html#ffi-buffer-ffi-from-buffer
-    官方文档只说了 ffi.buffer(cdata, [size]) 不申请内存，
-    我测试 ffi.string(cdata, [maxlen]) 重新申请了内存,
-    ffi.new(cdecl, init=None) 申请内存.
-        # 错误使用 new cdata char[] 不能使用 <value>[:] 来转为 python bytes string
-
-    ffi.from_buffer(python_buffer)  python string -> raw C data
-    ffi.buffer(cdata, [size])  raw C data -> cffi buffer
-         # 该函数没申请内存 是 buffer 实例，如果要申请内存变为 str 实例，则 <return_value>[:], 实测地址会变
-    ffi.string(cdata, [maxlen]) raw C data -> python string
-
-    cpp 中的结构体对齐方式是 1，在 cffi 中无效
-    #pragma pack(push,1)
-
-    '''
 
     def __init__(self, fullpath_dll):
         self._cffi_ins = None
@@ -80,15 +55,15 @@ class CffiExportStructure(object):
         cpp_python = ffi.dlopen(fullpath_dll)
 
         c_export_functions = ffi.new('ExportFunctions *')
-        # c_export_functions = ffi.new('ExportFunctions []',1)
-        c_export_functions_size = ffi.sizeof(c_export_functions[0])
+        c_export_functions_size = ffi.sizeof('ExportFunctions')
         c_export_functions[0].cb = c_export_functions_size
-
         c_return = cpp_python.InitExportFunctions(c_export_functions)
+
+        assert (c_return==0)
         assert (c_export_functions.cb == c_export_functions_size)
-        if c_return == 0:
-            self._c_export_functions = c_export_functions
-            self._cffi_ins = ffi
+
+        self._c_export_functions = c_export_functions
+        self._cffi_ins = ffi
 
     def empty(self):
         hr = self._c_export_functions.pfn_func_empty()
@@ -152,14 +127,14 @@ class CffiExportStructure(object):
         # buffer not have startwith attr
         # value.startwith('adadfs') error
         # value.decode('utf-8') error
-        return (hr, value)
+        return (hr, value[:])
 
     def out_memory_python_alloc(self):
         size = self._cffi_ins.new('unsigned *')
         pfn = self._c_export_functions.pfn_func_out_memory_alloc
         hr = pfn(self._cffi_ins.NULL, size)
         if hr == 0 and size[0] > 0:
-            ptr = self._cffi_ins.new('unsigned char[]', size[0])
+            ptr = self._cffi_ins.new('unsigned char []', size[0])
             io_print(u'python_print->cffi 提供申请的字符串内存地址 {}'.format(self._cffi_ins.addressof(ptr)[0]))
             hr = pfn(ptr, size)
             if hr == 0 and size[0] > 0:

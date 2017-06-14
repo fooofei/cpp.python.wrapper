@@ -22,7 +22,6 @@ curpath = os.path.dirname(os.path.realpath(__file__))
 from cpp_python_ctypes import bytes_string_address
 from cpp_python_ctypes import text_string_address
 
-
 def change_value_int(ins):
     io_print(u'test_func_change_value_int')
     v = 2
@@ -99,11 +98,7 @@ def out_memory_python_noalloc(ins):
     io_print(u'python_print->out memory [{}]{}'.format(len(r[1]), r[1]))
 
 
-    if not isinstance(r[1],str):
-        from cpp_python_cffi import address_of_cffi_buffer
-        addr = address_of_cffi_buffer(r[1])
-    else:
-        addr = bytes_string_address(r[1])
+    addr = bytes_string_address(r[1])
 
     io_print(u'python_print->这里有字符串内存拷贝')
     io_print(u'python_print->address result {}'.format(hex(addr)))
