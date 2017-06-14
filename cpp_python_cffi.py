@@ -51,7 +51,7 @@ class CffiExportStructure(object):
     '''
             , packed=True)
 
-        io_print(u'load {}'.format(fullpath_dll))
+        io_print(u'load {0}'.format(fullpath_dll))
         cpp_python = ffi.dlopen(fullpath_dll)
 
         c_export_functions = ffi.new('ExportFunctions *')
