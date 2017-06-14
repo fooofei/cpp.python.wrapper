@@ -10,13 +10,13 @@ cdata is more useful.
 
 conversion:
 
-<python bytes string> -> int : ffi.from_buffer() ,<not need ffi.addressof()>, ffi.cast('uintptr_t', )
+<python bytes string> -> int address : ffi.from_buffer() ,<not need ffi.addressof()>, ffi.cast('uintptr_t', )
 
-int -> <python bytes string> : ffi.cast('const char *', ), ffi.string()
+int address -> <python bytes string> : ffi.cast('const char *', ), ffi.string()
 
-int -> <python int list> : ffi.cast('const unsigned *', ), ffi.unpack( , length/ffi.sizeof('unsigned'))
+int address -> <python int list> : ffi.cast('const unsigned *', ), ffi.unpack( , length/ffi.sizeof('unsigned'))
 
-int -> <cffi buffer> : v_cdata_address = ffi.cast('const char *', v_int),
+int address -> <cffi buffer> : v_cdata_address = ffi.cast('const char *', v_int),
     v_cffi_buffer =  ffi.buffer(v_cdata_address, length) ,  assert(len(v_cffi_buffer) == length)
 
     assert(v_cffi_buffer[:] == ffi.string(v_cdata_address, length) )
