@@ -1,5 +1,5 @@
 ﻿
-## C++ 与 Python 粘合最好的实践方法
+## C++ 与 Python 粘合最好的实践方法 [![Build Status](https://travis-ci.org/fooofei/cpp_python_wrapper.svg?branch=master)](https://travis-ci.org/fooofei/cpp_python_wrapper)
 
 对比过 Cython(可以写 C++ class), Python COM, swig， 此方法是最好的。
 
