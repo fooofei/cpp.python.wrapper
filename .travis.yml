@@ -1,5 +1,12 @@
 language: python
 
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake-data
+      - cmake
 python:
   - "2.6"
   - "2.7"
