@@ -7,4 +7,4 @@ python:
 install: "pip install -r requirements.txt"
 # command to run tests
 script: python cffi_usage.py
-script: python cpp_python_call.py
+script: sh direct_run.sh
