@@ -25,9 +25,9 @@ from cpp_python_ctypes import text_string_address
 def change_value_int(ins):
     io_print(u'test_func_change_value_int')
     v = 2
-    io_print(u'python_python->pass value {} to cpp'.format(v))
+    io_print(u'python_python->pass value {0} to cpp'.format(v))
     r = ins.change_value_int(v)
-    io_print(u'python_python->return value from cpp {}'.format(r[1]))
+    io_print(u'python_python->return value from cpp {0}'.format(r[1]))
     io_print('')
 
 
@@ -38,14 +38,14 @@ def pass_python_bytes_string(ins):
 
 
     addr = bytes_string_address(v)
-    io_print(u'python_print->address by ctypes api {}'.format(hex(addr)))
+    io_print(u'python_print->address by ctypes api {0}'.format(hex(addr)))
 
     # check
 
     assert (v
             == ctypes.string_at(addr,len(v))
             )
-    io_print('python_print->pass bytes string to cpp [{}]{}'.format(len(v), v))
+    io_print('python_print->pass bytes string to cpp [{0}]{1}'.format(len(v), v))
     r = ins.pass_python_bytes_string(v)
     io_print('')
 
@@ -54,11 +54,11 @@ def pass_python_unicode_string(ins):
     ##
     io_print(u'test_func_pass_python_unicode_string')
     v = u'this is string in python pass_python_unicode_string'
-    io_print(u'python_print->pass unicode string to cpp [{}]{}'.format(len(v), v))
+    io_print(u'python_print->pass unicode string to cpp [{0}]{1}'.format(len(v), v))
 
 
     addr = text_string_address(v)
-    io_print(u'python_print->address by ctypes api {}'.format(hex(addr)))
+    io_print(u'python_print->address by ctypes api {0}'.format(hex(addr)))
 
     if not(addr==0):
         assert (v
@@ -75,10 +75,10 @@ def pass_python_unicode_string(ins):
     ##
     io_print(u'test_func_pass_python_unicode_string_chs')
     v = u'这是来自 Python 的字符串，用中文表示，长度27'
-    io_print(u'python_print->pass unicode string to cpp [{}]{}'.format(len(v), v))
+    io_print(u'python_print->pass unicode string to cpp [{0}]{1}'.format(len(v), v))
     addr = text_string_address(v)
 
-    io_print(u'python_print->address by ctypes api {}'.format(hex(addr)))
+    io_print(u'python_print->address by ctypes api {0}'.format(hex(addr)))
 
     if not(addr==0):
         assert (v
@@ -95,13 +95,13 @@ def out_memory_python_noalloc(ins):
     ##
     io_print(u'test_func_out_memory_python_noalloc')
     r = ins.out_memory_python_noalloc()
-    io_print(u'python_print->out memory [{}]{}'.format(len(r[1]), r[1]))
+    io_print(u'python_print->out memory [{0}]{1}'.format(len(r[1]), r[1]))
 
 
     addr = bytes_string_address(r[1])
 
     io_print(u'python_print->这里有字符串内存拷贝')
-    io_print(u'python_print->address result {}'.format(hex(addr)))
+    io_print(u'python_print->address result {0}'.format(hex(addr)))
 
     io_print('')
 
@@ -110,7 +110,7 @@ def out_memory_python_alloc(ins):
     ##
     io_print(u'test_func_out_memory_python_alloc')
     r = ins.out_memory_python_alloc()
-    io_print(u'python_print->out memory [{}]{}'.format(len(r[1]), r[1]))
+    io_print(u'python_print->out memory [{0}]{1}'.format(len(r[1]), r[1]))
     io_print('')
 
 
