@@ -190,7 +190,7 @@ class CppExportStructure(ctypes.Structure):
         pfn = self.pfn_func_out_memory_noalloc
         hr = pfn(ctypes.pointer(addr), ctypes.pointer(addr_size))
         assert (hr == 0 and addr_size.value > 0)
-        io_print(u'python_print->ctypes 从 cpp 返回的字符串内存地址 {}'.format(
+        io_print(u'python_print->ctypes 从 cpp 返回的字符串内存地址 {0}'.format(
             hex(addr.value)
         ))
         vm = ctypes_memory_view(addr.value, addr_size.value)
@@ -206,7 +206,7 @@ class CppExportStructure(ctypes.Structure):
         hr = pfn(ctypes.c_void_p(0), pointer(addr_size))
         assert (hr == 0 and addr_size.value > 0)
         addr = ctypes.create_string_buffer(addr_size.value)
-        io_print(u'python_print->ctypes 提供申请的字符串内存地址 {}'.format(
+        io_print(u'python_print->ctypes 提供申请的字符串内存地址 {0}'.format(
             hex(ctypes.addressof(addr))
         ))
         hr = pfn(addr, pointer(addr_size))
