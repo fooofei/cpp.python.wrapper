@@ -30,7 +30,7 @@ class CffiExportStructure(object):
         import cffi
         ffi = cffi.FFI()
 
-        print ('cffi version :{}'.format(cffi.__version_info__))
+        print ('cffi version :{0}'.format(cffi.__version_info__))
 
         # Cannot use  extern "C" in function declaration
 
@@ -85,7 +85,7 @@ class CffiExportStructure(object):
         ''' python 中的内存给 cpp 读'''
 
         if not isinstance(bytes_string, io_in_out.io_binary_type):
-            raise ValueError('must be type {}'.format(io_in_out.io_binary_type))
+            raise ValueError('must be type {0}'.format(io_in_out.io_binary_type))
 
         # 用不用这个没关系
         # c_value_c_char_p = self._cffi_ins.from_buffer(value)
@@ -96,7 +96,7 @@ class CffiExportStructure(object):
     def pass_python_unicode_string(self, unicode_string):
         '''存在内存拷贝（ctypes 获取的地址与 cpp 中读到的不一致 两边不知道谁错了）'''
         if not isinstance(unicode_string, io_in_out.io_text_type):
-            raise ValueError('must be type {}'.format(io_in_out.io_text_type))
+            raise ValueError('must be type {0}'.format(io_in_out.io_text_type))
         hr = self._c_export_functions.pfn_func_in_memoryw(unicode_string, len(unicode_string))
         assert hr == 0
         return (hr,)
@@ -119,7 +119,7 @@ class CffiExportStructure(object):
         hr = self._c_export_functions.pfn_func_out_memory_noalloc(ptr, size)
         assert (hr == 0)
 
-        io_print(u'python_print->从 cpp 返回的字符串内存地址 {}'.format(ptr[0]))
+        io_print(u'python_print->从 cpp 返回的字符串内存地址 {0}'.format(ptr[0]))
         value = self._cffi_ins.buffer(ptr[0], size[0])
 
         # value2 = value[:] # 这样是生成了新的字符串
@@ -135,7 +135,7 @@ class CffiExportStructure(object):
         hr = pfn(self._cffi_ins.NULL, size)
         if hr == 0 and size[0] > 0:
             ptr = self._cffi_ins.new('unsigned char []', size[0])
-            io_print(u'python_print->cffi 提供申请的字符串内存地址 {}'.format(self._cffi_ins.addressof(ptr)[0]))
+            io_print(u'python_print->cffi 提供申请的字符串内存地址 {0}'.format(self._cffi_ins.addressof(ptr)[0]))
             hr = pfn(ptr, size)
             if hr == 0 and size[0] > 0:
                 # not use ptr[0]
