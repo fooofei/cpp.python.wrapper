@@ -42,7 +42,9 @@ int WINAPI InitExportFunctions(ExportFunctions *);
     return ffi
 
 class CffiSingleton(object):
-    ''' cffi is not thread safe'''
+    ''' cffi is not thread safe
+        ref https://bitbucket.org/cffi/cffi/issues/319/for-name-in-backend__dict__-runtimeerror
+    '''
     _instance = None
     _lock = threading.Lock()
 
