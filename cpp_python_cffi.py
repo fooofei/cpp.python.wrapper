@@ -4,7 +4,7 @@
 import io_in_out
 from io_in_out import io_print
 import cffi
-
+import threading
 
 def cffi_address_2_int(v):
     return int(cffi.FFI().cast('uintptr_t',v))
@@ -13,6 +13,49 @@ def address_of_cffi_buffer(v):
     ffi = cffi.FFI()
     x =  ffi.from_buffer(v)
     return cffi_address_2_int(x)
+
+
+def _get_cffi_instance():
+    import cffi
+    ffi = cffi.FFI()
+
+    print ('cffi version :{0}'.format(cffi.__version_info__))
+
+    # Cannot use  extern "C" in function declaration
+
+    ffi.cdef(
+        '''
+
+typedef struct 
+{
+    unsigned int cb;
+    int (WINAPI * pfn_func_empty)();
+    int (WINAPI * pfn_func_change_value_int)(unsigned int * pvalue);
+    int (WINAPI * pfn_func_in_memory)(const char * ptr, unsigned int ptr_size);
+    int (WINAPI * pfn_func_in_memoryw)(const wchar_t * ptr, unsigned int ptr_size);
+    int (WINAPI * pfn_func_out_memory_noalloc)(const void ** out_ptr, unsigned int * out_ptr_size);
+    int (WINAPI * pfn_func_out_memory_alloc)(void * out_ptr, unsigned int * out_ptr_size);
+}ExportFunctions;
+int WINAPI InitExportFunctions(ExportFunctions *);
+'''
+        , packed=True)
+    return ffi
+
+class CffiSingleton(object):
+    ''' cffi is not thread safe'''
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        super(CffiSingleton, cls).__new__(
+            cls, *args, **kwargs)
+        if not cls._instance:
+            cls._lock.acquire()
+            if not cls._instance:
+                cls._instance = _get_cffi_instance()
+            cls._lock.release()
+        return cls._instance
+
 
 class CffiExportStructure(object):
 
@@ -27,29 +70,8 @@ class CffiExportStructure(object):
         return self._cffi_ins is not None and self._c_export_functions is not None
 
     def _cffi_init(self, fullpath_dll):
-        import cffi
-        ffi = cffi.FFI()
 
-        print ('cffi version :{0}'.format(cffi.__version_info__))
-
-        # Cannot use  extern "C" in function declaration
-
-        ffi.cdef(
-            '''
-    
-    typedef struct 
-    {
-        unsigned int cb;
-        int (WINAPI * pfn_func_empty)();
-        int (WINAPI * pfn_func_change_value_int)(unsigned int * pvalue);
-        int (WINAPI * pfn_func_in_memory)(const char * ptr, unsigned int ptr_size);
-        int (WINAPI * pfn_func_in_memoryw)(const wchar_t * ptr, unsigned int ptr_size);
-        int (WINAPI * pfn_func_out_memory_noalloc)(const void ** out_ptr, unsigned int * out_ptr_size);
-        int (WINAPI * pfn_func_out_memory_alloc)(void * out_ptr, unsigned int * out_ptr_size);
-    }ExportFunctions;
-   int WINAPI InitExportFunctions(ExportFunctions *);
-    '''
-            , packed=True)
+        ffi = CffiSingleton()
 
         io_print(u'load {0}'.format(fullpath_dll))
         cpp_python = ffi.dlopen(fullpath_dll)
