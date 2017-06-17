@@ -194,6 +194,10 @@ class CppExportStructure(ctypes.Structure):
             hex(addr.value)
         ))
         vm = ctypes_memory_view(addr.value, addr_size.value)
+        # vm not have vm.value
+        # len(vm) == addr_size.value
+        # can use vm[0], vm[1]... it's bytes read
+
         # Cast const void * -> const char *
         v = ctypes.cast(vm, ctypes.c_char_p)
         return (hr, v.value)
