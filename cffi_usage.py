@@ -10,7 +10,7 @@ cdata is more useful.
 
 conversion:
 
-<python bytes string> -> int address : ffi.from_buffer() ,<not need ffi.addressof()>, ffi.cast('uintptr_t', )
+<python bytes string> -> int address : ffi.from_buffer() ,<not need ffi.addressof()>, int(ffi.cast('uintptr_t', ))
 
 int address -> <python bytes string> : ffi.cast('const char *', ), ffi.string()
 
