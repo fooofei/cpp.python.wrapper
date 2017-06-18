@@ -41,7 +41,12 @@ struct ExportFunctions
     */
     int (WINAPI * pfn_func_out_memory_noalloc)(const void ** out_ptr, unsigned int * out_ptr_size);
     int (WINAPI * pfn_func_out_memory_alloc)(void * out_ptr, unsigned int * out_ptr_size);
-    
+
+    /*
+     Test use byte's array read and int' array read is the same memory.
+     Function is 8 bytes alignment.
+     */
+    int (WINAPI * pfn_func_address_read)(const void ** , unsigned  *);
 
 };
 #pragma pack(pop)
@@ -53,7 +58,7 @@ int WINAPI func_in_memory(const char *, unsigned int );
 int WINAPI func_in_memoryw(const wchar_t *, unsigned int );
 int WINAPI func_out_memory_noalloc(const void **, unsigned int *);
 int WINAPI func_out_memory_alloc(void *, unsigned int *);
-
+int WINAPI func_address_read(const void ** , unsigned  *);
 
 
 extern "C" 

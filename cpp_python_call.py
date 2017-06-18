@@ -129,6 +129,10 @@ def cpp_python_framework(ins):
     out_memory_python_noalloc(ins)
     out_memory_python_alloc(ins)
 
+    io_print(u'test_func_address_read')
+    ins.address_read()
+    io_print(u'')
+
 
 def entry():
 

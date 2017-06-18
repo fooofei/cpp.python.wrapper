@@ -29,7 +29,7 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
     unsigned int cb;
     const unsigned int version_1_function_count = 6; 
     // 1.Increment here.
-    //const unsigned int version_2_functon_count = ?; 
+    const unsigned int version_2_functon_count = 7;
     unsigned int func_count ;
 
     cb = arg->cb;
@@ -45,25 +45,26 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
     // conflict  std::min  min
     // (std::min)<unsigned> Visual Studio 2017 compile error
     // but not (std::min<unsigned>) 
-    func_count = std::min<unsigned>(func_count,version_1_function_count);
+    func_count = std::min<unsigned>(func_count,version_2_functon_count);
 
     switch (func_count)
     {
-        // 3.
-    //case version2:
-
-    case version_1_function_count:
-        arg->pfn_func_change_value_int = func_change_value_int;
-        arg->pfn_func_empty = func_empty;
-        arg->pfn_func_in_memory = func_in_memory;
-        arg->pfn_func_in_memoryw = func_in_memoryw;
-        arg->pfn_func_out_memory_noalloc = func_out_memory_noalloc;
-        arg->pfn_func_out_memory_alloc = func_out_memory_alloc;
-        // return the real size.
-        arg->cb = 4 + func_count * sizeof(void*);
-        return E_NO_ERROR;
-    default:
-        break;
+        // 3
+        case version_2_functon_count:
+            arg->pfn_func_address_read=func_address_read;
+            // not break out
+        case version_1_function_count:
+            arg->pfn_func_change_value_int = func_change_value_int;
+            arg->pfn_func_empty = func_empty;
+            arg->pfn_func_in_memory = func_in_memory;
+            arg->pfn_func_in_memoryw = func_in_memoryw;
+            arg->pfn_func_out_memory_noalloc = func_out_memory_noalloc;
+            arg->pfn_func_out_memory_alloc = func_out_memory_alloc;
+            // return the real size.
+            arg->cb = 4 + func_count * sizeof(void*);
+            return E_NO_ERROR;
+        default:
+            break;
     }
     return E_ERROR_NOIMPL;
 
@@ -89,7 +90,7 @@ int WINAPI func_change_value_int(unsigned int * pvalue)
 int WINAPI func_in_memory(const char * ptr, unsigned int size)
 {
     RASSERT_RETURN(ptr,E_ERROR_ARG);
-    printf("cpp_print->memory from python [0x%p][%u]value:(%.*s)\n",ptr,size,(int)size,ptr);
+    printf("cpp_print->memory from python [0x%p][%u]value:(%.*s)\n",(const void*)ptr,size,(int)size,ptr);
     fflush(stdout);
     return E_NO_ERROR;
 }
@@ -121,7 +122,7 @@ int WINAPI func_in_memoryw(const wchar_t * ptr, unsigned int size)
     char * restore = setlocale(LC_ALL,local);
     unsigned p_size = size*sizeof(wchar_t); // TODO ?
 
-    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",ptr,size,p_size,ptr);
+    printf("cpp_print->[0x%p][%u]value:(%.*ls)\n",(const void*)ptr,size,p_size,ptr);
 
 
 
@@ -166,9 +167,26 @@ int WINAPI func_out_memory_noalloc(const void ** out_ptr, unsigned int * out_ptr
     unsigned int l = (unsigned int)strlen(p);
 
     printf("cpp_print->out string [%u],%s\n", l, p);
-    printf("cpp_print->return [addr:0x%p],[size:%u]\n", p, l);
+    printf("cpp_print->return [addr:0x%p],[size:%u]\n", (const void *)p, l);
+    fflush(stdout);
 
     *out_ptr = p;
     *out_ptr_size = l;
+    return E_NO_ERROR;
+}
+
+static const char g_alignment_memory[]= "aaaaaaaabbbbbbbbccccccccdddddddd";
+int WINAPI func_address_read(const void ** out, unsigned  * out_size)
+{
+    RASSERT_RETURN(out && out_size, E_ERROR_ARG);
+
+    const void * p = g_alignment_memory;
+    unsigned size=(unsigned)strlen((const char *)p);
+    printf("cpp_print->return [addr:0x%p],[size:%u]\n",p,size);
+    fflush(stdout);
+
+    *out=p;
+    *out_size=size;
+
     return E_NO_ERROR;
 }

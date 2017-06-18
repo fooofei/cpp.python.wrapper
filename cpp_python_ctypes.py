@@ -94,27 +94,66 @@ def text_string_address(v):
     return ctypes_api_unicode_string_addr(v)
 
 
-def ctypes_memory_view(addr, addr_size):
+def ctypes_addr_as_array(addr, addr_size, element_type):
     ''' Read addr memory, not copy.
     addr: int
     addr_size: int, not ctypes.c_uint
-    '''
-    return (ctypes.c_ubyte * addr_size).from_address(addr)
+    element_type: ctypes type
+    :return <cpp_python_ctypes.c_ubyte_Array_%d>
 
+     # <return_value> not have <return_value>.value
+     # len(<return_value>) == addr_size
+     # Can use <return_value>[0], <return_value>[1]...
+     # Can use for i in <return_value>:
+     # Can (base64.b64encode(<return_value>))
+
+    ref https://docs.python.org/2/library/ctypes.html  # Fundamental data types
+    element_type=c_ubyte,
+        type(<return_value>)=?,
+        type(<return_value>[0])=int
+        # ctypes.sizeof(<return_value>[0]) # error
+        ctypes.sizeof(<return_value>)= ctypes.sizeof(element_type)*len(<return_value>)
+
+    element_type=c_uint,
+        type(<return_value>)=?,
+        type(<return_value>[0])=int
+        ctypes.sizeof(<return_value>)= ctypes.sizeof(element_type)*len(<return_value>)
+
+    element_type=c_char,
+        type(<return_value>)=?,
+        type(<return_value>[0])=str
+        ctypes.sizeof(<return_value>)= ctypes.sizeof(element_type)*len(<return_value>)
+
+    '''
+    sz = addr_size / ctypes.sizeof(element_type)
+    return (element_type * sz).from_address(addr)
+
+
+def ctypes_array_as_array(old_array, new_array_element_type):
+    bytes_size = ctypes.sizeof(old_array)
+    return ctypes_addr_as_array(ctypes.addressof(old_array)
+                                , bytes_size
+                                , new_array_element_type
+                                )
+
+def RtnHrFuncType(*args, **kwargs):
+    return ExportFuncType(c_int,*args,**kwargs)
 
 class CppExportStructure(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
         ('cb', c_uint),
-        ('pfn_func_empty', ExportFuncType(c_int)),
-        ('pfn_func_change_value_int', ExportFuncType(c_int, POINTER(c_uint))),
-        ('pfn_func_in_memory', ExportFuncType(c_int, c_char_p, c_uint)),
-        ('pfn_func_in_memoryw', ExportFuncType(c_int, c_wchar_p, c_uint)),
-        ('pfn_func_out_memory_noalloc', ExportFuncType(c_int, POINTER(c_void_p), POINTER(c_uint))),
-        ('pfn_func_out_memory_alloc', ExportFuncType(c_uint, c_void_p, POINTER(c_uint))),
+        ('pfn_func_empty', RtnHrFuncType()),
+        ('pfn_func_change_value_int', RtnHrFuncType(POINTER(c_uint))),
+        ('pfn_func_in_memory', RtnHrFuncType(c_char_p, c_uint)),
+        ('pfn_func_in_memoryw', RtnHrFuncType(c_wchar_p, c_uint)),
+        ('pfn_func_out_memory_noalloc', RtnHrFuncType(POINTER(c_void_p), POINTER(c_uint))),
+        ('pfn_func_out_memory_alloc', RtnHrFuncType(c_void_p, POINTER(c_uint))),
+        ('pfn_func_address_read', RtnHrFuncType(POINTER(c_void_p), POINTER(c_uint))),
     ]
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(CppExportStructure, self).__init__(*args, **kwargs)
         self.reset()
 
     def loadlib(self, fullpath_dll):
@@ -152,10 +191,14 @@ class CppExportStructure(ctypes.Structure):
            addr = c_char_p(bytes_string)
            but it will do copy, alloc memory.
         '''
-        addr = ctypes_api_bytes_string_addr(bytes_string)
+        # Way 1:
+        # addr = ctypes_api_bytes_string_addr(bytes_string)
         # 非必须
         # addr_size=ctypes.c_uint(len(bytes_string))
-        addr = ctypes.cast(addr, ctypes.c_char_p)
+        # addr = ctypes.cast(addr, ctypes.c_char_p)
+
+        # Way 2:
+        addr = bytes_string
         hr = self.pfn_func_in_memory(addr, len(bytes_string))
         assert (hr == 0)
         return (hr,)
@@ -165,7 +208,11 @@ class CppExportStructure(ctypes.Structure):
         '''
 
         # Can not use pystring_as_string_size
+        # Way 1:
         addr_buffer = ctypes.create_unicode_buffer(unicode_string)
+        # Way 2:
+        # addr_buffer = unicode_string
+        # Way 3:
         # addr_buffer = ctypes.c_wchar_p(unicode_string)
         # In Visual Studio, debug it, see the unicode is utf16(2 bytes)
         hr = self.pfn_func_in_memoryw(addr_buffer, len(unicode_string))
@@ -193,10 +240,7 @@ class CppExportStructure(ctypes.Structure):
         io_print(u'python_print->ctypes 从 cpp 返回的字符串内存地址 {0}'.format(
             hex(addr.value)
         ))
-        vm = ctypes_memory_view(addr.value, addr_size.value)
-        # vm not have vm.value
-        # len(vm) == addr_size.value
-        # can use vm[0], vm[1]... it's bytes read
+        vm = ctypes_addr_as_array(addr.value, addr_size.value, ctypes.c_ubyte)
 
         # Cast const void * -> const char *
         v = ctypes.cast(vm, ctypes.c_char_p)
@@ -216,3 +260,26 @@ class CppExportStructure(ctypes.Structure):
         hr = pfn(addr, pointer(addr_size))
         assert (hr == 0)
         return (hr, addr.value)
+
+
+    def address_read(self):
+        import base64
+        addr = ctypes.c_void_p(0)
+        addr_size = ctypes.c_uint(0)
+        pfn = self.pfn_func_address_read
+        hr = pfn(ctypes.pointer(addr), ctypes.pointer(addr_size))
+        assert (hr == 0 and addr_size.value > 0)
+        io_print(u'python_print->从 cpp 返回的 addr={0} size={1}'.format(
+            hex(addr.value),addr_size.value
+        ))
+        addr = addr.value
+        addr_size=addr_size.value
+
+        bytes_read = ctypes_addr_as_array(addr,addr_size,ctypes.c_ubyte)
+        b1  =base64.b64encode(bytes_read)
+
+        uints_read=ctypes_addr_as_array(addr,addr_size,ctypes.c_uint)
+        b2 = base64.b64encode(uints_read)
+        io_print(u'encode bytes {0}'.format(b1))
+        io_print(u'encode uints {0}'.format(b2))
+        assert (b1 == b2)

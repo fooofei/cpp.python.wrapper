@@ -30,11 +30,12 @@ typedef struct
 {
     unsigned int cb;
     int (WINAPI * pfn_func_empty)();
-    int (WINAPI * pfn_func_change_value_int)(unsigned int * pvalue);
-    int (WINAPI * pfn_func_in_memory)(const char * ptr, unsigned int ptr_size);
-    int (WINAPI * pfn_func_in_memoryw)(const wchar_t * ptr, unsigned int ptr_size);
-    int (WINAPI * pfn_func_out_memory_noalloc)(const void ** out_ptr, unsigned int * out_ptr_size);
-    int (WINAPI * pfn_func_out_memory_alloc)(void * out_ptr, unsigned int * out_ptr_size);
+    int (WINAPI * pfn_func_change_value_int)(unsigned * pvalue);
+    int (WINAPI * pfn_func_in_memory)(const char * ptr, unsigned ptr_size);
+    int (WINAPI * pfn_func_in_memoryw)(const wchar_t * ptr, unsigned ptr_size);
+    int (WINAPI * pfn_func_out_memory_noalloc)(const void ** out_ptr, unsigned * out_ptr_size);
+    int (WINAPI * pfn_func_out_memory_alloc)(void * out_ptr, unsigned * out_ptr_size);
+    int (WINAPI * pfn_func_address_read)(const void ** , unsigned  *);
 }ExportFunctions;
 int WINAPI InitExportFunctions(ExportFunctions *);
 '''
@@ -167,6 +168,10 @@ class CffiExportStructure(object):
                 return (hr, value)
         assert (hr == 0)
         return (hr, None)
+
+    def address_read(self):
+        pfn = self._c_export_functions.pfn_func_address_read
+
 
     def test_func_not_exist_in_cffi(self):
         '''

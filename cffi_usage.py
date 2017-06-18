@@ -21,6 +21,7 @@ int address -> <cffi buffer> : v_cdata_address = ffi.cast('const char *', v_int)
 
     assert(v_cffi_buffer[:] == ffi.string(v_cdata_address, length) )
     cdata 没有这个 [:] 取值的语法
+    cffi.buffer() 的读取缺陷: 忽视第一个参数 cdata 的类型, 总是按字节读
 
 1 python object, cffi object 到 c api 就没那么严格
   c api 接收 const char * 参数，传递 python bytes string 可以， 直接用的地址，无拷贝
@@ -142,6 +143,32 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(v[1], 0)
         self.assertEqual(v[2], 2)
         self.assertEqual(v[4], 0x0403)
+
+    def test_encode_buffer(self):
+        ''' cffi.buffer is always bytes read '''
+        import base64
+        a = b'aaaaaaaabbbbbbbbccccccccddddddddeeeeeeee'
+        bytes_size = len(a)
+        addr = cffi_bytes_string_int_address(a)
+        a1 = ffi.cast('unsigned char *',addr)
+        b1 = ffi.buffer(a1,bytes_size)
+        d1 = base64.b64encode(b1)
+
+        print ('\nd={0}'.format(base64.b64encode(a)))
+
+        print ('a1={0}, b1={1}, b1[0]={2},b1[8]={3}, d1={4}'.format(a1,b1,b1[0],b1[8],d1))
+
+        a2=ffi.cast('unsigned *',addr)
+        b2 = ffi.buffer(a2,bytes_size/ffi.sizeof('unsigned'))
+        d2 = base64.b64encode(b2)
+        print ('a2={0}, b2={1}, b2[0]={2},b2[8]={3} d2={4}'.format(a2,b2,b2[0],b2[8],d2))
+
+        b22 = ffi.buffer(a2, bytes_size)
+        d22 = base64.b64encode(b22)
+        print ('a2={0}, b22={1}, b22[0]={2},b22[8]={3} d22={4}'.format(a2, b22, b22[0], b22[8], d22))
+
+        self.assertEqual(d1,d22)
+
 
     def test_buffer_length(self):
         '''
