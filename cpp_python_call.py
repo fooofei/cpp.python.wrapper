@@ -16,8 +16,10 @@ import os
 import sys
 import ctypes
 from  io_in_out import io_print
+from  io_in_out import io_in_arg
 
 curpath = os.path.dirname(os.path.realpath(__file__))
+curpath = io_in_arg(curpath)
 
 from cpp_python_ctypes import bytes_string_address
 from cpp_python_ctypes import text_string_address

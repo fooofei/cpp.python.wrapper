@@ -160,8 +160,13 @@ class CppExportStructure(ctypes.Structure):
         self.reset()
 
     def loadlib(self, fullpath_dll):
-        p = io_out_arg(fullpath_dll, pfn_check=os.path.exists)
-        lib = library_loader.LoadLibrary(p)
+        pre = fullpath_dll
+        # This is good
+        fullpath_dll = io_out_arg(fullpath_dll, pfn_check=os.path.exists)
+        # win32:TypeError: LoadLibrary() argument 1 must be string, not unicode
+        # linux: UnicodeEncodeError: 'ascii' codec can't encode characters in position 47-48: ordinal not in range(128)
+        io_print(u'ctypes lib load ({0}){1}'.format(type(fullpath_dll), pre))
+        lib = library_loader.LoadLibrary(fullpath_dll)
         if not lib:
             raise ValueError('fail load')
 

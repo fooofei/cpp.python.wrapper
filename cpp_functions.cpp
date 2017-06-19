@@ -2,7 +2,7 @@
 #include "cpp_functions.h"
 
 #include <iostream>
-#include <string>
+#include <string.h> // strlen memcpy
 #include <algorithm>
 
 // Also can use HRESULT to replace.

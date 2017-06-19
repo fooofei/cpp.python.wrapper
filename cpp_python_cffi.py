@@ -80,8 +80,8 @@ class CffiExportStructure(object):
     def _cffi_init(self, fullpath_dll):
 
         ffi = CffiSingleton()
-
-        io_print(u'load {0}'.format(fullpath_dll))
+        # 大好处，传递 unicode 即可, ctypes 还需要转
+        io_print(u'cffi lib load ({0}){1}'.format(type(fullpath_dll),fullpath_dll))
         cpp_python = ffi.dlopen(fullpath_dll)
 
         c_export_functions = ffi.new('ExportFunctions *')
