@@ -65,15 +65,17 @@ class CffiSingleton(object):
 
 
 class CffiExportStructure(object):
-    def __init__(self, fullpath_dll):
+    def __init__(self):
         self._cffi_ins = None
         self._c_export_functions = None
 
-        self._cffi_init(fullpath_dll)
 
     @property
     def valid(self):
         return self._cffi_ins is not None and self._c_export_functions is not None
+
+    def load_lib(self, fullpath_dll):
+        return self._cffi_init(fullpath_dll)
 
     def _cffi_init(self, fullpath_dll):
 

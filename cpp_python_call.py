@@ -178,7 +178,8 @@ def entry():
 
     if is_has_cffi:
         from cpp_python_cffi import CffiExportStructure
-        ins = CffiExportStructure(p)
+        ins = CffiExportStructure()
+        ins.load_lib(p)
         assert (ins.valid)
         io_print(u'test cffi..............................')
         cpp_python_framework(ins)
