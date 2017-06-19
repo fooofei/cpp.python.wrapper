@@ -21,7 +21,9 @@ unsigned char * /unsigned int * 读取，cffi 只能使用 unsigned char * 读�
 
 ## cffi 优于 ctypes 的
 
-在 cffi 中，如果结构体的域是函数指针，要判断是否为 NULL，这样做 f==_ffi.NULL 就可以了。ctypes 暂时没找到方法
+在 cffi 中，如果结构体的域是函数指针，要判断是否为 NULL，这样做 func_ptr == ffi.NULL 就可以了。
+
+ctypes 的用法  ctypes.cast(func_ptr, c_void_p).value == None , 注意 c_void_p(0) == c_void_p(0) 是 False.
 
 ## 项目说明
 
