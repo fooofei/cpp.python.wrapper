@@ -2,7 +2,7 @@
 #include "cpp_functions.h"
 
 #include <iostream>
-#include <string.h>
+#include <string>
 #include <algorithm>
 
 // Also can use HRESULT to replace.
@@ -28,8 +28,9 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
 
     unsigned int cb;
     const unsigned int version_1_function_count = 6; 
-    // 1.Increment here.
+    // step 1 Increment here.
     const unsigned int version_2_functon_count = 7;
+    const unsigned int version_3_functon_count = 8;
     unsigned int func_count ;
 
     cb = arg->cb;
@@ -41,15 +42,17 @@ int WINAPI InitExportFunctions(ExportFunctions * arg)
     RASSERT_RETURN(cb%sizeof(void*)==0,E_ERROR_ARG);
     func_count = cb/sizeof(void*);
 
-    // 2.Increment here
+    // step 2 Increment here
     // conflict  std::min  min
     // (std::min)<unsigned> Visual Studio 2017 compile error
     // but not (std::min<unsigned>) 
-    func_count = std::min<unsigned>(func_count,version_2_functon_count);
+    func_count = std::min<unsigned>(func_count, version_3_functon_count);
 
     switch (func_count)
     {
-        // 3
+        // step 3
+        case version_3_functon_count:
+            arg->pfn_func_out_memoryw = func_out_memoryw;
         case version_2_functon_count:
             arg->pfn_func_address_read=func_address_read;
             // not break out
@@ -189,4 +192,42 @@ int WINAPI func_address_read(const void ** out, unsigned  * out_size)
     *out_size=size;
 
     return E_NO_ERROR;
+}
+
+int WINAPI func_out_memoryw(wchar_t * out, unsigned * out_size)
+{
+    RASSERT_RETURN(out_size, E_ERROR_ARG);
+
+    wchar_t ch1 = 0x4f60;// ni
+    wchar_t ch2 = 0x597d;// hao
+    wchar_t ch3 = 0x6765;// lai
+    wchar_t ch4 = 0x81ea;// zi
+
+    std::wstring s;
+
+    s.append(1, ch1);
+    s.append(1, ch2);
+    s.append(1, L',');
+    s.append(1, ch3);
+    s.append(1, ch4);
+    s.append(L"cpp.");
+
+    unsigned sz = (unsigned)s.size();
+
+    if (out)
+    {
+        if (!(sz < *out_size))
+        {
+            *out_size = sz + 1;
+            return E_ERROR_ARG;
+        }
+        printf("cpp_print->return [addr:0x%p],[size:%u]\n", out, sz);
+        memcpy(out, s.c_str(), sizeof(wchar_t)*sz);
+    }
+    else
+    {
+        *out_size = sz + 1;
+    }
+    return E_NO_ERROR;
+
 }

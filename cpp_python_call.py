@@ -22,6 +22,7 @@ curpath = os.path.dirname(os.path.realpath(__file__))
 from cpp_python_ctypes import bytes_string_address
 from cpp_python_ctypes import text_string_address
 
+
 def change_value_int(ins):
     io_print(u'test_func_change_value_int')
     v = 2
@@ -36,14 +37,13 @@ def pass_python_bytes_string(ins):
     io_print(u'test_func_pass_python_bytes_string')
     v = 'this is string in python pass_python_bytes_string'
 
-
     addr = bytes_string_address(v)
     io_print(u'python_print->address by ctypes api {0}'.format(hex(addr)))
 
     # check
 
     assert (v
-            == ctypes.string_at(addr,len(v))
+            == ctypes.string_at(addr, len(v))
             )
     io_print('python_print->pass bytes string to cpp [{0}]{1}'.format(len(v), v))
     r = ins.pass_python_bytes_string(v)
@@ -56,19 +56,18 @@ def pass_python_unicode_string(ins):
     v = u'this is string in python pass_python_unicode_string'
     io_print(u'python_print->pass unicode string to cpp [{0}]{1}'.format(len(v), v))
 
-
     addr = text_string_address(v)
     io_print(u'python_print->address by ctypes api {0}'.format(hex(addr)))
 
-    if not(addr==0):
+    if not (addr == 0):
         assert (v
-                == ctypes.wstring_at(addr,len(v))
+                == ctypes.wstring_at(addr, len(v))
                 )
 
     ins.pass_python_unicode_string(v)
 
-    if not (addr==0):
-        ins.pass_python_unicode_string2(addr,len(v))
+    if not (addr == 0):
+        ins.pass_python_unicode_string2(addr, len(v))
 
     io_print('')
 
@@ -80,14 +79,14 @@ def pass_python_unicode_string(ins):
 
     io_print(u'python_print->address by ctypes api {0}'.format(hex(addr)))
 
-    if not(addr==0):
+    if not (addr == 0):
         assert (v
                 == ctypes.wstring_at(addr, len(v))
                 )
 
     ins.pass_python_unicode_string(v)
-    if not (addr==0):
-        r = ins.pass_python_unicode_string2(addr,len(v))
+    if not (addr == 0):
+        r = ins.pass_python_unicode_string2(addr, len(v))
     io_print('')
 
 
@@ -96,7 +95,6 @@ def out_memory_python_noalloc(ins):
     io_print(u'test_func_out_memory_python_noalloc')
     r = ins.out_memory_python_noalloc()
     io_print(u'python_print->out memory [{0}]{1}'.format(len(r[1]), r[1]))
-
 
     addr = bytes_string_address(r[1])
 
@@ -111,6 +109,17 @@ def out_memory_python_alloc(ins):
     io_print(u'test_func_out_memory_python_alloc')
     r = ins.out_memory_python_alloc()
     io_print(u'python_print->out memory [{0}]{1}'.format(len(r[1]), r[1]))
+    io_print('')
+
+
+def out_unicode_string(ins):
+    io_print(u'test_out_unicode_string')
+    r = ins.out_memoryw()
+    io_print(u'python_print->out memoryw [{0}]{1}'.format(len(r[1]), r[1]))
+
+    addr = text_string_address(r[1])
+    io_print(u'python_print->return unicode address {0}'.format(hex(addr)))
+
     io_print('')
 
 
@@ -133,9 +142,10 @@ def cpp_python_framework(ins):
     ins.address_read()
     io_print(u'')
 
+    out_unicode_string(ins)
+
 
 def entry():
-
     from cpp_python_ctypes import CppExportStructure
 
     a = {u'win32': u'cpp_python.dll',
@@ -156,6 +166,7 @@ def entry():
 
     ins = CppExportStructure()
     ins.loadlib(p)
+    io_print(u'test ctypes..............................')
     cpp_python_framework(ins)
 
     is_has_cffi = False
@@ -169,7 +180,9 @@ def entry():
         from cpp_python_cffi import CffiExportStructure
         ins = CffiExportStructure(p)
         assert (ins.valid)
+        io_print(u'test cffi..............................')
         cpp_python_framework(ins)
+
 
 if __name__ == '__main__':
     entry()

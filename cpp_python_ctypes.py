@@ -136,8 +136,10 @@ def ctypes_array_as_array(old_array, new_array_element_type):
                                 , new_array_element_type
                                 )
 
+
 def RtnHrFuncType(*args, **kwargs):
-    return ExportFuncType(c_int,*args,**kwargs)
+    return ExportFuncType(c_int, *args, **kwargs)
+
 
 class CppExportStructure(ctypes.Structure):
     _pack_ = 1
@@ -150,6 +152,7 @@ class CppExportStructure(ctypes.Structure):
         ('pfn_func_out_memory_noalloc', RtnHrFuncType(POINTER(c_void_p), POINTER(c_uint))),
         ('pfn_func_out_memory_alloc', RtnHrFuncType(c_void_p, POINTER(c_uint))),
         ('pfn_func_address_read', RtnHrFuncType(POINTER(c_void_p), POINTER(c_uint))),
+        ('pfn_func_out_memoryw', RtnHrFuncType(c_wchar_p, POINTER(c_uint))),
     ]
 
     def __init__(self, *args, **kwargs):
@@ -261,7 +264,6 @@ class CppExportStructure(ctypes.Structure):
         assert (hr == 0)
         return (hr, addr.value)
 
-
     def address_read(self):
         import base64
         addr = ctypes.c_void_p(0)
@@ -270,16 +272,29 @@ class CppExportStructure(ctypes.Structure):
         hr = pfn(ctypes.pointer(addr), ctypes.pointer(addr_size))
         assert (hr == 0 and addr_size.value > 0)
         io_print(u'python_print->从 cpp 返回的 addr={0} size={1}'.format(
-            hex(addr.value),addr_size.value
+            hex(addr.value), addr_size.value
         ))
         addr = addr.value
-        addr_size=addr_size.value
+        addr_size = addr_size.value
 
-        bytes_read = ctypes_addr_as_array(addr,addr_size,ctypes.c_ubyte)
-        b1  =base64.b64encode(bytes_read)
+        bytes_read = ctypes_addr_as_array(addr, addr_size, ctypes.c_ubyte)
+        b1 = base64.b64encode(bytes_read)
 
-        uints_read=ctypes_addr_as_array(addr,addr_size,ctypes.c_uint)
+        uints_read = ctypes_addr_as_array(addr, addr_size, ctypes.c_uint)
         b2 = base64.b64encode(uints_read)
         io_print(u'encode bytes {0}'.format(b1))
         io_print(u'encode uints {0}'.format(b2))
         assert (b1 == b2)
+
+    def out_memoryw(self):
+        pfn = self.pfn_func_out_memoryw
+        size = ctypes.c_uint(0)
+        hr = pfn(ctypes.c_wchar_p(0), ctypes.pointer(size))
+        assert (hr == 0 and size.value > 0)
+        buf = ctypes.create_unicode_buffer(size.value)
+        io_print(u'python_print->提供 cpp 内存 addr={0} size={1}'.format(
+            hex(ctypes.addressof(buf)), len(buf)
+        ))
+        hr = pfn(buf, ctypes.pointer(size))
+        assert (hr == 0 and size.value > 0)
+        return (hr, buf.value)
