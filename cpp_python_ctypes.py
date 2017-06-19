@@ -179,6 +179,12 @@ class CppExportStructure(ctypes.Structure):
         memset(addressof(self), 0, sizeof(CppExportStructure))
         self.cb = sizeof(CppExportStructure)
 
+    def _func_ptr_is_null(self, v):
+        '''
+        c_void_p(0) == c_void_p(0)  is False
+        '''
+        return ctypes.cast(v, ctypes.c_void_p).value == None
+
     def empty(self):
         hr = self.pfn_func_empty()
         assert (hr == 0)

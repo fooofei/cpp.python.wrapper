@@ -76,6 +76,9 @@ class CffiExportStructure(object):
     def load_lib(self, fullpath_dll):
         return self._cffi_init(fullpath_dll)
 
+    def _func_ptr_is_null(self, v):
+        return v == self._cffi_ins.NULL
+
     def _cffi_init(self, fullpath_dll):
 
         ffi = CffiSingleton()
