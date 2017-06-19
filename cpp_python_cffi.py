@@ -54,8 +54,7 @@ class CffiSingleton(object):
     _lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs):
-        super(CffiSingleton, cls).__new__(
-            cls, *args, **kwargs)
+        super(CffiSingleton, cls).__new__(cls)
         if not cls._instance:
             cls._lock.acquire()
             if not cls._instance:
